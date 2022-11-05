@@ -12,17 +12,20 @@ pub enum Messages {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(tag = "status", content = "c")]
+#[serde(tag = "t", content = "c")]
 pub enum Responses {
-    #[serde(rename = "200")]
+    #[serde(rename = "/is_online")]
     IsOnline { is_online: bool, uuid: Uuid },
-    #[serde(rename = "200")]
+    #[serde(rename = "/connected")]
     Connected(bool),
-    #[serde(rename = "400")]
+    #[serde(rename = "/error")]
     Error(String),
+    #[serde(rename = "/broadcast")]
+    Broadcast(String),
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(untagged)]
 pub enum InternalMessages {
     RequestUser {
         user_id: Uuid,
@@ -32,6 +35,11 @@ pub enum InternalMessages {
         requester_id: Uuid,
         is_online: bool,
         user_id: Uuid,
+    },
+    BroadCastMessage {
+        // Minecraft Chat Codes
+        message: String,
+        to: Vec<Uuid>,
     },
 }
 

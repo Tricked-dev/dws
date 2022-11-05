@@ -9,4 +9,5 @@ use crate::messages::InternalMessages;
 pub struct AppState {
     pub user_set: Mutex<HashSet<Uuid>>,
     pub tx: broadcast::Sender<InternalMessages>,
+    pub broadcast_secret: String,
 }

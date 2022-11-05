@@ -1,11 +1,14 @@
 #![allow(clippy::single_match)]
 
-use std::{collections::HashSet, net::SocketAddr, sync::Arc};
+use std::{collections::HashSet, sync::Arc};
 
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use futures_util::future::join;
 use parking_lot::Mutex;
-use tokio::sync::broadcast;
+use tokio::sync::broadcast as tokio_broadcast;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{app_state::AppState, messages::InternalMessages, ws::ws_handler};
@@ -15,6 +18,7 @@ pub mod error;
 pub mod messages;
 pub mod ws;
 
+mod broadcast;
 mod metrics;
 
 pub use error::Result;
@@ -29,19 +33,22 @@ async fn main() -> Result<()> {
         .init();
 
     let user_set = Mutex::new(HashSet::new());
-    let (tx, mut rx) = broadcast::channel::<InternalMessages>(100);
+    let (tx, mut rx) = tokio_broadcast::channel::<InternalMessages>(100);
 
     let app_state = Arc::new(AppState {
         user_set,
         tx: tx.clone(),
+        broadcast_secret: std::env::var("BROADCAST_SECRET").unwrap_or_else(|_| "secret".into()),
     });
     // build our application with some routes
     let app = Router::with_state(app_state.clone())
         .route("/metrics", get(metrics::metrics))
+        .route("/broadcast", post(broadcast::broadcast))
         .route("/ws", get(ws_handler));
-
+    let host = std::env::var("HOST").unwrap_or_else(|_| "127.0.0.1".into());
+    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".into());
     // run it with hyper
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = format!("{host}:{port}").parse().unwrap();
     tracing::debug!("listening on {}", addr);
     let (r, _) = join(axum::Server::bind(&addr).serve(app.into_make_service()), async {
         while let Ok(msg) = rx.recv().await {

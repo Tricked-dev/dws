@@ -70,6 +70,12 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                     };
                     let _ = sender.send(to_ws_message(msg)).await;
                 }
+                InternalMessages::BroadCastMessage { message, to } => {
+                    if to.contains(&uuid) || to.is_empty() {
+                        let msg = Responses::Broadcast(message);
+                        let _ = sender.send(to_ws_message(msg)).await;
+                    }
+                }
                 _ => {}
             }
         }
