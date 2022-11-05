@@ -9,8 +9,6 @@ pub enum Messages {
     IsOnline(Uuid),
     #[serde(rename = "/connect")]
     Connect(Uuid),
-    #[serde(rename = "/disconnect")]
-    Disconnect(i32),
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

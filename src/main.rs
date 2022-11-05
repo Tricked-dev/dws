@@ -1,4 +1,4 @@
-#![allow(clippy::single_match, unused_must_use)]
+#![allow(clippy::single_match)]
 
 use std::{collections::HashSet, net::SocketAddr, sync::Arc};
 
@@ -11,11 +11,14 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::{app_state::AppState, messages::InternalMessages, ws::ws_handler};
 
 pub mod app_state;
+pub mod error;
 pub mod messages;
 pub mod ws;
 
+pub use error::Result;
+
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG").unwrap_or_else(|_| "dws=debug,tower_http=debug".into()),
@@ -54,5 +57,6 @@ async fn main() {
         }
     })
     .await;
-    r.unwrap();
+    r?;
+    Ok(())
 }
