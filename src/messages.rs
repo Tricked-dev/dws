@@ -1,3 +1,4 @@
+use axum::extract::ws::Message;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -34,4 +35,26 @@ pub enum InternalMessages {
         is_online: bool,
         user_id: Uuid,
     },
+}
+
+pub fn parse_ws_message(msg: &str) -> Option<Messages> {
+    let msg = serde_json::from_str::<Messages>(msg);
+    match msg {
+        Ok(msg) => Some(msg),
+        Err(e) => {
+            tracing::error!("Error parsing message: {}", e);
+            None
+        }
+    }
+}
+
+pub fn to_ws_message(msg: Responses) -> Message {
+    let msg = serde_json::to_string(&msg);
+    match msg {
+        Ok(msg) => Message::Text(msg),
+        Err(e) => {
+            tracing::error!("Error parsing message: {}", e);
+            Message::Text(String::new())
+        }
+    }
 }
