@@ -1,0 +1,30 @@
+_id: req_db85df751cdc491d8d97a55fb0a7c1aa
+type: Request
+parentId: fld_33377bf834134f62ab0de9fb77551fc1
+modified: 1667660523947
+created: 1667656778869
+url: "{{ _.url }}/broadcast"
+name: Broadcast
+description: Broadcast a message to every user or a range of users
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+    	"message": "Hello world",
+    	"to": []
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+    id: pair_6e2c1d466c8c4ae9a31009d9017a7aea
+authentication: {}
+metaSortKey: -1667660464879
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

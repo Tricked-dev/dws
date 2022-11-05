@@ -1,11 +1,11 @@
 _id: ws-req_980f778e88904157bc15773bec8119c5
 type: WebSocketRequest
 parentId: wrk_bbd1c7b78ef24956ba434c94fa8106d0
-modified: 1667637671392
+modified: 1667660344346
 created: 1667637663593
 name: WS2
 url: ws://127.0.0.1:3000/ws
-metaSortKey: -1667637663593
+metaSortKey: -1667637663618
 headers: []
 authentication: {}
 parameters: []

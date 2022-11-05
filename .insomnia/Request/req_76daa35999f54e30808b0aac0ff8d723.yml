@@ -1,0 +1,21 @@
+_id: req_76daa35999f54e30808b0aac0ff8d723
+type: Request
+parentId: fld_33377bf834134f62ab0de9fb77551fc1
+modified: 1667660522969
+created: 1667660464829
+url: "{{ _.url }}/metrics"
+name: Metrics
+description: ""
+method: GET
+body: {}
+parameters: []
+headers: []
+authentication: {}
+metaSortKey: -1667660464829
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
