@@ -1,0 +1,12 @@
+_id: ws-payload_93c85c0492884b91bf684a501612a398
+type: WebSocketPayload
+parentId: ws-req_980f778e88904157bc15773bec8119c5
+modified: 1667637699376
+created: 1667637680309
+name: New Payload
+value: |-
+  {
+      "t": "/connect",
+      "c": "41a9b6aa-168a-4be8-8df8-cac17daf6384"
+  }
+mode: application/json
