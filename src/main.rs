@@ -15,6 +15,8 @@ pub mod error;
 pub mod messages;
 pub mod ws;
 
+mod metrics;
+
 pub use error::Result;
 
 #[tokio::main]
@@ -34,7 +36,9 @@ async fn main() -> Result<()> {
         tx: tx.clone(),
     });
     // build our application with some routes
-    let app = Router::with_state(app_state.clone()).route("/ws", get(ws_handler));
+    let app = Router::with_state(app_state.clone())
+        .route("/metrics", get(metrics::metrics))
+        .route("/ws", get(ws_handler));
 
     // run it with hyper
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

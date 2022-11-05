@@ -40,7 +40,10 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
         }
     }
 
-    sender.send(to_ws_message(Responses::Connected(true))).await.unwrap();
+    if let Err(e) = sender.send(to_ws_message(Responses::Connected(true))).await {
+        tracing::error!("Error sending message: {}", e);
+        return Ok(());
+    }
     let uuid = match uuid {
         Some(uuid) => uuid,
         None => return Ok(()),
