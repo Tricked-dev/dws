@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use axum::extract::ws::Message;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -7,6 +9,8 @@ use uuid::Uuid;
 pub enum Messages {
     #[serde(rename = "/is_online")]
     IsOnline(Uuid),
+    #[serde(rename = "/is_online/bulk")]
+    IsOnlineBulk(Vec<Uuid>),
     #[serde(rename = "/connect")]
     Connect(Uuid),
 }
@@ -16,6 +20,8 @@ pub enum Messages {
 pub enum Responses {
     #[serde(rename = "/is_online")]
     IsOnline { is_online: bool, uuid: Uuid },
+    #[serde(rename = "/is_online/bulk")]
+    IsOnlineBulk(HashMap<Uuid, bool>),
     #[serde(rename = "/connected")]
     Connected(bool),
     #[serde(rename = "/error")]
@@ -31,10 +37,18 @@ pub enum InternalMessages {
         user_id: Uuid,
         requester_id: Uuid,
     },
+    RequestUsersBulk {
+        user_ids: Vec<Uuid>,
+        requester_id: Uuid,
+    },
     UserRequestResponse {
         requester_id: Uuid,
         is_online: bool,
         user_id: Uuid,
+    },
+    UserRequestBulkResponse {
+        requester_id: Uuid,
+        users: HashMap<Uuid, bool>,
     },
     BroadCastMessage {
         // Minecraft Chat Codes

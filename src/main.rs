@@ -63,6 +63,21 @@ async fn main() -> Result<()> {
                     };
                     let _ = tx.send(msg);
                 }
+                InternalMessages::RequestUsersBulk { user_ids, requester_id } => {
+                    let user_set = app_state.user_set.lock();
+                    let list = user_ids
+                        .into_iter()
+                        .map(|user_id| {
+                            let is_online = user_set.contains(&user_id);
+                            (user_id, is_online)
+                        })
+                        .collect();
+                    let msg = InternalMessages::UserRequestBulkResponse {
+                        users: list,
+                        requester_id,
+                    };
+                    let _ = tx.send(msg);
+                }
                 _ => {}
             }
         }

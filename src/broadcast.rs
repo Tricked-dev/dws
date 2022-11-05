@@ -1,13 +1,8 @@
 use std::sync::Arc;
 
 use axum::{
-    body::Bytes,
     extract::{Json, State, TypedHeader},
-    headers::{
-        self,
-        authorization::{self, Bearer, Credentials},
-        Authorization,
-    },
+    headers::{authorization::Bearer, Authorization},
     response::IntoResponse,
 };
 

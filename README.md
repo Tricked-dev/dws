@@ -54,6 +54,26 @@ See the insomnia example for more detailed info
 }
 ```
 
+### Requesting user status bulk
+
+```json
+{
+  "t": "/is_online/bulk",
+  "c": ["41a9b6aa-168a-4be8-8df8-cac17daf7384"]
+}
+```
+
+---
+
+```json
+{
+  "t": "/is_online/bulk",
+  "c": {
+    "41a9b6aa-168a-4be8-8df8-cac17daf7384": false
+  }
+}
+```
+
 ### Broadcasts
 
 Broadcasts are only received not send you can view the broadcast post request to find out how those work

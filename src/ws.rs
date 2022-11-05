@@ -61,13 +61,23 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
             match msg {
                 InternalMessages::UserRequestResponse {
                     is_online,
-                    requester_id: _,
+                    requester_id,
                     user_id,
                 } => {
+                    if requester_id != uuid {
+                        continue;
+                    }
                     let msg = Responses::IsOnline {
                         is_online,
                         uuid: user_id,
                     };
+                    let _ = sender.send(to_ws_message(msg)).await;
+                }
+                InternalMessages::UserRequestBulkResponse { requester_id, users } => {
+                    if requester_id != uuid {
+                        continue;
+                    }
+                    let msg = Responses::IsOnlineBulk(users);
                     let _ = sender.send(to_ws_message(msg)).await;
                 }
                 InternalMessages::BroadCastMessage { message, to } => {
@@ -94,6 +104,12 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                 Some(Messages::IsOnline(user_uuid)) => {
                     let _ = tx.send(InternalMessages::RequestUser {
                         user_id: user_uuid,
+                        requester_id: uuid,
+                    });
+                }
+                Some(Messages::IsOnlineBulk(user_uuids)) => {
+                    let _ = tx.send(InternalMessages::RequestUsersBulk {
+                        user_ids: user_uuids,
                         requester_id: uuid,
                     });
                 }
