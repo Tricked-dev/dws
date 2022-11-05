@@ -1,7 +1,7 @@
 _id: ws-req_207e48ed7a4043eb930b8b1f4edfab96
 type: WebSocketRequest
 parentId: wrk_bbd1c7b78ef24956ba434c94fa8106d0
-modified: 1667637668335
+modified: 1667637868968
 created: 1667637625046
 name: WS1
 url: ws://127.0.0.1:3000/ws
@@ -13,8 +13,9 @@ settingEncodeUrl: true
 settingStoreCookies: false
 settingSendCookies: false
 settingFollowRedirects: global
-description: |
+description: |-
   ## Connectings
+
 
   ```json
   {
@@ -23,11 +24,34 @@ description: |
   }
   ```
 
+  ---
+
+  ```json
+  {
+  	"status": "200",
+  	"c": true
+  }
+  ```
+
+
+
   ## Requesting user status
 
   ```json
   {
   	"t": "/is_online",
   	"c": "41a9b6aa-168a-4be8-8df8-cac17daf7384"
+  }
+  ```
+
+  ---
+
+  ```json
+  {
+  	"status": "200",
+  	"c": {
+  		"is_online": true,
+  		"uuid": "41a9b6aa-168a-4be8-8df8-cac17daf7384"
+  	}
   }
   ```
