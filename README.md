@@ -13,7 +13,8 @@ See the insomnia docs
 
 ## Websockets
 
-See the insomnia example for more detailed info
+See the insomnia example for more detailed info,
+Nonces are a optional field
 
 ### Connecting
 
@@ -38,7 +39,7 @@ See the insomnia example for more detailed info
 ```json
 {
   "t": "/is_online",
-  "c": "41a9b6aa-168a-4be8-8df8-cac17daf7384"
+  "c": { "uuid": "41a9b6aa-168a-4be8-8df8-cac17daf6324", "nonce": "HI!" }
 }
 ```
 
@@ -49,7 +50,8 @@ See the insomnia example for more detailed info
   "t": "/is_online",
   "c": {
     "is_online": true,
-    "uuid": "41a9b6aa-168a-4be8-8df8-cac17daf7384"
+    "uuid": "41a9b6aa-168a-4be8-8df8-cac17daf6324",
+    "nonce": "HI!"
   }
 }
 ```
@@ -59,7 +61,7 @@ See the insomnia example for more detailed info
 ```json
 {
   "t": "/is_online/bulk",
-  "c": ["41a9b6aa-168a-4be8-8df8-cac17daf7384"]
+  "c": { "uuids": ["41a9b6aa-168a-4be8-8df8-cac17daf6324"], "nonce": "HI!" }
 }
 ```
 
@@ -69,7 +71,10 @@ See the insomnia example for more detailed info
 {
   "t": "/is_online/bulk",
   "c": {
-    "41a9b6aa-168a-4be8-8df8-cac17daf7384": false
+    "users": {
+      "41a9b6aa-168a-4be8-8df8-cac17daf6324": true
+    },
+    "nonce": "HI!"
   }
 }
 ```

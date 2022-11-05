@@ -8,9 +8,9 @@ use uuid::Uuid;
 #[serde(tag = "t", content = "c")]
 pub enum Messages {
     #[serde(rename = "/is_online")]
-    IsOnline(Uuid),
+    IsOnline { uuid: Uuid, nonce: Option<String> },
     #[serde(rename = "/is_online/bulk")]
-    IsOnlineBulk(Vec<Uuid>),
+    IsOnlineBulk { uuids: Vec<Uuid>, nonce: Option<String> },
     #[serde(rename = "/connect")]
     Connect(Uuid),
 }
@@ -19,9 +19,16 @@ pub enum Messages {
 #[serde(tag = "t", content = "c")]
 pub enum Responses {
     #[serde(rename = "/is_online")]
-    IsOnline { is_online: bool, uuid: Uuid },
+    IsOnline {
+        is_online: bool,
+        uuid: Uuid,
+        nonce: Option<String>,
+    },
     #[serde(rename = "/is_online/bulk")]
-    IsOnlineBulk(HashMap<Uuid, bool>),
+    IsOnlineBulk {
+        users: HashMap<Uuid, bool>,
+        nonce: Option<String>,
+    },
     #[serde(rename = "/connected")]
     Connected(bool),
     #[serde(rename = "/error")]
@@ -36,19 +43,23 @@ pub enum InternalMessages {
     RequestUser {
         user_id: Uuid,
         requester_id: Uuid,
+        nonce: Option<String>,
     },
     RequestUsersBulk {
         user_ids: Vec<Uuid>,
         requester_id: Uuid,
+        nonce: Option<String>,
     },
     UserRequestResponse {
         requester_id: Uuid,
         is_online: bool,
         user_id: Uuid,
+        nonce: Option<String>,
     },
     UserRequestBulkResponse {
         requester_id: Uuid,
         users: HashMap<Uuid, bool>,
+        nonce: Option<String>,
     },
     BroadCastMessage {
         // Minecraft Chat Codes

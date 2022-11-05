@@ -63,6 +63,7 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                     is_online,
                     requester_id,
                     user_id,
+                    nonce,
                 } => {
                     if requester_id != uuid {
                         continue;
@@ -70,14 +71,19 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                     let msg = Responses::IsOnline {
                         is_online,
                         uuid: user_id,
+                        nonce,
                     };
                     let _ = sender.send(to_ws_message(msg)).await;
                 }
-                InternalMessages::UserRequestBulkResponse { requester_id, users } => {
+                InternalMessages::UserRequestBulkResponse {
+                    requester_id,
+                    users,
+                    nonce,
+                } => {
                     if requester_id != uuid {
                         continue;
                     }
-                    let msg = Responses::IsOnlineBulk(users);
+                    let msg = Responses::IsOnlineBulk { users, nonce };
                     let _ = sender.send(to_ws_message(msg)).await;
                 }
                 InternalMessages::BroadCastMessage { message, to } => {
@@ -101,16 +107,18 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
             let msg = parse_ws_message(&text);
             tracing::debug!("{}", text);
             match msg {
-                Some(Messages::IsOnline(user_uuid)) => {
+                Some(Messages::IsOnline { uuid: user_id, nonce }) => {
                     let _ = tx.send(InternalMessages::RequestUser {
-                        user_id: user_uuid,
+                        user_id,
                         requester_id: uuid,
+                        nonce,
                     });
                 }
-                Some(Messages::IsOnlineBulk(user_uuids)) => {
+                Some(Messages::IsOnlineBulk { uuids, nonce }) => {
                     let _ = tx.send(InternalMessages::RequestUsersBulk {
-                        user_ids: user_uuids,
+                        user_ids: uuids,
                         requester_id: uuid,
+                        nonce,
                     });
                 }
 

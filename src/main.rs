@@ -53,17 +53,26 @@ async fn main() -> Result<()> {
     let (r, _) = join(axum::Server::bind(&addr).serve(app.into_make_service()), async {
         while let Ok(msg) = rx.recv().await {
             match msg {
-                InternalMessages::RequestUser { user_id, requester_id } => {
+                InternalMessages::RequestUser {
+                    user_id,
+                    requester_id,
+                    nonce,
+                } => {
                     let user_set = app_state.user_set.lock();
                     let is_online = user_set.contains(&user_id);
                     let msg = InternalMessages::UserRequestResponse {
                         is_online,
                         requester_id,
                         user_id,
+                        nonce,
                     };
                     let _ = tx.send(msg);
                 }
-                InternalMessages::RequestUsersBulk { user_ids, requester_id } => {
+                InternalMessages::RequestUsersBulk {
+                    user_ids,
+                    requester_id,
+                    nonce,
+                } => {
                     let user_set = app_state.user_set.lock();
                     let list = user_ids
                         .into_iter()
@@ -75,6 +84,7 @@ async fn main() -> Result<()> {
                     let msg = InternalMessages::UserRequestBulkResponse {
                         users: list,
                         requester_id,
+                        nonce,
                     };
                     let _ = tx.send(msg);
                 }
