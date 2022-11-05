@@ -1,0 +1,25 @@
+[package]
+name = "dws"
+version = "0.1.0"
+edition = "2021"
+license = "MPL-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+axum = { git = "https://github.com/tokio-rs/axum", features = [
+    "ws",
+    "macros",
+    "headers"
+] }
+futures = "0.3.25"
+futures-util = "0.3.25"
+headers = "0.3"
+once_cell = { version = "1.16.0", features = ["parking_lot"] }
+parking_lot = { version = "0.12.1", features = ["serde"] }
+serde = { version = "1.0.147", features = ["derive"] }
+serde_json = "1.0.87"
+tokio = { version = "1.0", features = ["full"] }
+tower = { version = "0.4", features = ["util"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1.2.1", features = ["v4", "serde"] }
