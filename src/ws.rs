@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use crate::{
     app_state::AppState,
-    messages::{parse_ws_message, to_ws_message, InternalMessages, Messages, Responses},
+    messages::{parse_ws_message, to_ws_message, InternalMessages, Messages},
     Result,
 };
 
@@ -40,7 +40,7 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
         }
     }
 
-    if let Err(e) = sender.send(to_ws_message(Responses::Connected(true))).await {
+    if let Err(e) = sender.send(to_ws_message(Messages::ConnectedResponse(true))).await {
         tracing::error!("Error sending message: {}", e);
         return Ok(());
     }
@@ -48,7 +48,6 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
         Some(uuid) => uuid,
         None => return Ok(()),
     };
-
     // Subscribe before sending joined message.
     let mut rx = state.tx.subscribe();
 
@@ -68,7 +67,7 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                     if requester_id != uuid {
                         continue;
                     }
-                    let msg = Responses::IsOnline {
+                    let msg = Messages::IsOnlineResponse {
                         is_online,
                         uuid: user_id,
                         nonce,
@@ -83,14 +82,23 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                     if requester_id != uuid {
                         continue;
                     }
-                    let msg = Responses::IsOnlineBulk { users, nonce };
+                    let msg = Messages::IsOnlineBulkResponse { users, nonce };
                     let _ = sender.send(to_ws_message(msg)).await;
                 }
                 InternalMessages::BroadCastMessage { message, to } => {
                     if to.contains(&uuid) || to.is_empty() {
-                        let msg = Responses::Broadcast(message);
+                        let msg = Messages::Broadcast(message);
                         let _ = sender.send(to_ws_message(msg)).await;
                     }
+                }
+                InternalMessages::Pong {
+                    nonce,
+                    uuid: requester_id,
+                } => {
+                    if requester_id != uuid {
+                        continue;
+                    }
+                    let _ = sender.send(to_ws_message(Messages::Pong(nonce))).await;
                 }
                 _ => {}
             }
@@ -120,6 +128,9 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                         requester_id: uuid,
                         nonce,
                     });
+                }
+                Some(Messages::Ping(nonce)) => {
+                    let _ = tx.send(InternalMessages::Pong { nonce, uuid });
                 }
 
                 _ => {}

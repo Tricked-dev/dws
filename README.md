@@ -79,6 +79,23 @@ Nonces are a optional field
 }
 ```
 
+### Pings
+
+```json
+{
+  "t": "/ping"
+}
+```
+
+---
+
+```json
+{
+  "t": "/pong",
+  "c": null
+}
+```
+
 ### Broadcasts
 
 Broadcasts are only received not send you can view the broadcast post request to find out how those work

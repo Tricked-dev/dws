@@ -8,33 +8,42 @@ use uuid::Uuid;
 #[serde(tag = "t", content = "c")]
 pub enum Messages {
     #[serde(rename = "/is_online")]
-    IsOnline { uuid: Uuid, nonce: Option<String> },
-    #[serde(rename = "/is_online/bulk")]
-    IsOnlineBulk { uuids: Vec<Uuid>, nonce: Option<String> },
-    #[serde(rename = "/connect")]
-    Connect(Uuid),
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(tag = "t", content = "c")]
-pub enum Responses {
-    #[serde(rename = "/is_online")]
     IsOnline {
-        is_online: bool,
         uuid: Uuid,
+        #[serde(skip_serializing_if = "Option::is_none")]
         nonce: Option<String>,
     },
     #[serde(rename = "/is_online/bulk")]
     IsOnlineBulk {
+        uuids: Vec<Uuid>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        nonce: Option<String>,
+    },
+    #[serde(rename = "/connect")]
+    Connect(Uuid),
+    #[serde(rename = "/is_online")]
+    IsOnlineResponse {
+        is_online: bool,
+        uuid: Uuid,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        nonce: Option<String>,
+    },
+    #[serde(rename = "/is_online/bulk")]
+    IsOnlineBulkResponse {
         users: HashMap<Uuid, bool>,
+        #[serde(skip_serializing_if = "Option::is_none")]
         nonce: Option<String>,
     },
     #[serde(rename = "/connected")]
-    Connected(bool),
+    ConnectedResponse(bool),
     #[serde(rename = "/error")]
     Error(String),
     #[serde(rename = "/broadcast")]
     Broadcast(String),
+    #[serde(rename = "/ping")]
+    Ping(#[serde(skip_serializing_if = "Option::is_none")] Option<String>),
+    #[serde(rename = "/pong")]
+    Pong(#[serde(skip_serializing_if = "Option::is_none")] Option<String>),
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -66,6 +75,10 @@ pub enum InternalMessages {
         message: String,
         to: Vec<Uuid>,
     },
+    Pong {
+        nonce: Option<String>,
+        uuid: Uuid,
+    },
 }
 
 pub fn parse_ws_message(msg: &str) -> Option<Messages> {
@@ -79,7 +92,7 @@ pub fn parse_ws_message(msg: &str) -> Option<Messages> {
     }
 }
 
-pub fn to_ws_message(msg: Responses) -> Message {
+pub fn to_ws_message(msg: Messages) -> Message {
     let msg = serde_json::to_string(&msg);
     match msg {
         Ok(msg) => Message::Text(msg),
