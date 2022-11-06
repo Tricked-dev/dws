@@ -91,8 +91,7 @@ Nonces are a optional field
 
 ```json
 {
-  "t": "/pong",
-  "c": null
+  "t": "/pong"
 }
 ```
 

@@ -58,6 +58,11 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     let mut send_task = tokio::spawn(async move {
         while let Ok(msg) = rx.recv().await {
             match msg {
+                InternalMessages::UserInvalidJson { requester_id, error } => {
+                    if requester_id == uuid {
+                        let _ = sender.send(to_ws_message(Messages::Error(error))).await;
+                    }
+                }
                 InternalMessages::UserRequestResponse {
                     is_online,
                     requester_id,
@@ -115,6 +120,18 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
             let msg = parse_ws_message(&text);
             tracing::debug!("{}", text);
             match msg {
+                Some(Messages::Connect(_)) => {
+                    let _ = tx.send(InternalMessages::UserInvalidJson {
+                        requester_id: uuid,
+                        error: "Already connected".to_owned(),
+                    });
+                }
+                Some(Messages::Error(e)) => {
+                    let _ = tx.send(InternalMessages::UserInvalidJson {
+                        requester_id: uuid,
+                        error: e,
+                    });
+                }
                 Some(Messages::IsOnline { uuid: user_id, nonce }) => {
                     let _ = tx.send(InternalMessages::RequestUser {
                         user_id,

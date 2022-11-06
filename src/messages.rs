@@ -2,36 +2,28 @@ use std::collections::HashMap;
 
 use axum::extract::ws::Message;
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 use uuid::Uuid;
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "t", content = "c")]
 pub enum Messages {
     #[serde(rename = "/is_online")]
-    IsOnline {
-        uuid: Uuid,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        nonce: Option<String>,
-    },
+    IsOnline { uuid: Uuid, nonce: Option<String> },
     #[serde(rename = "/is_online/bulk")]
-    IsOnlineBulk {
-        uuids: Vec<Uuid>,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        nonce: Option<String>,
-    },
+    IsOnlineBulk { uuids: Vec<Uuid>, nonce: Option<String> },
     #[serde(rename = "/connect")]
     Connect(Uuid),
     #[serde(rename = "/is_online")]
     IsOnlineResponse {
         is_online: bool,
         uuid: Uuid,
-        #[serde(skip_serializing_if = "Option::is_none")]
         nonce: Option<String>,
     },
     #[serde(rename = "/is_online/bulk")]
     IsOnlineBulkResponse {
         users: HashMap<Uuid, bool>,
-        #[serde(skip_serializing_if = "Option::is_none")]
         nonce: Option<String>,
     },
     #[serde(rename = "/connected")]
@@ -41,9 +33,9 @@ pub enum Messages {
     #[serde(rename = "/broadcast")]
     Broadcast(String),
     #[serde(rename = "/ping")]
-    Ping(#[serde(skip_serializing_if = "Option::is_none")] Option<String>),
+    Ping(Option<String>),
     #[serde(rename = "/pong")]
-    Pong(#[serde(skip_serializing_if = "Option::is_none")] Option<String>),
+    Pong(Option<String>),
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -70,6 +62,10 @@ pub enum InternalMessages {
         users: HashMap<Uuid, bool>,
         nonce: Option<String>,
     },
+    UserInvalidJson {
+        requester_id: Uuid,
+        error: String,
+    },
     BroadCastMessage {
         // Minecraft Chat Codes
         message: String,
@@ -87,7 +83,7 @@ pub fn parse_ws_message(msg: &str) -> Option<Messages> {
         Ok(msg) => Some(msg),
         Err(e) => {
             tracing::error!("Error parsing message: {}", e);
-            None
+            Some(Messages::Error(e.to_string()))
         }
     }
 }
