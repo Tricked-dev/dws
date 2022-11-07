@@ -1,3 +1,7 @@
+## Api docs
+
+[./asyncapi.md](./asyncapi.md)
+
 ## Running
 
 ```bash

@@ -8,12 +8,12 @@ info:
     url: "https://www.mozilla.org/en-US/MPL/2.0/"
 servers:
   ws:
-    url: virginity.kokoniara.software/ws
+    url: wss://virginity.kokoniara.software/ws
     protocol: wss
     description: |
       WSS
   rest:
-    url: virginity.kokoniara.software
+    url: https://virginity.kokoniara.software
     protocol: https
     description: |
       Rest api
@@ -23,16 +23,22 @@ channels:
       Broadcast channel
     subscribe:
       message:
-        $ref: "#/components/messages/cosmeticsData"
+        $ref: "#/components/messages/broadcastMessage"
+    bindings:
+      rest:
   /cosmetics:
     description: |
       Cosmetics channel
     subscribe:
       message:
         $ref: "#/components/messages/cosmeticsData"
+    bindings:
+      rest:
   /metrics:
     description: |
       Prometheus metrics endpoint
+    bindings:
+      rest:
   /ws:
     publish:
       description: Send messages to the API
@@ -44,6 +50,8 @@ channels:
           - $ref: "#/components/messages/isOnline"
           - $ref: "#/components/messages/isOnlineBulk"
           - $ref: "#/components/messages/cosmeticsUpdate"
+      bindings:
+        ws:
 
     subscribe:
       description: Messages that you receive from the API
@@ -57,7 +65,8 @@ channels:
           - $ref: "#/components/messages/error"
           - $ref: "#/components/messages/broadcast"
           - $ref: "#/components/messages/cosmeticAck"
-
+      bindings:
+        ws:
 components:
   messages:
     ping:
@@ -225,15 +234,9 @@ components:
           type: object
           properties:
             uuids:
-              type: array
-              items:
-                type: object
-                description: This is actually a key value map
-                properties:
-                  uuid:
-                    $ref: "#/components/schemas/uuid"
-                  online:
-                    type: boolean
+              type: object
+              additionalProperties:
+                type: boolean
             nonce:
               $ref: "#/components/schemas/nonce"
     connectedResponse:
@@ -326,9 +329,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/cosmetic"
+        users:
+          type: object
+          additionalProperties:
+            type: integer
+            description: The id of the cosmetic
     uuid:
       type: string
       description: "A minecraft user uuid"
+      example: 41a9b6aa-168a-4be8-8df8-cac17daf7384
     nonce:
       type: string
       description: A nonce can be given to identiy a request
+      example: "ranmdomstringlol"
