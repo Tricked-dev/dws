@@ -11,7 +11,7 @@ use futures_util::{SinkExt, StreamExt};
 use uuid::Uuid;
 
 use crate::{
-    app_state::{self, AppState},
+    app_state::AppState,
     messages::{parse_ws_message, to_ws_message, InternalMessages, Messages},
     Result,
 };

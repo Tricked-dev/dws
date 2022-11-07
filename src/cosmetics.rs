@@ -1,14 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
 
 use axum::{
-    extract::{Json, State, TypedHeader},
-    headers::{authorization::Bearer, Authorization},
+    extract::{Json, State},
     response::IntoResponse,
 };
 use serde_json::json;
 use uuid::Uuid;
 
-use crate::{app_state::AppState, messages::InternalMessages};
+use crate::app_state::AppState;
 
 pub async fn cosmetics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let f = state.users.lock();

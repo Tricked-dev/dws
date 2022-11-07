@@ -19,7 +19,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
 use crate::{
-    app_state::{AppState, Cosmetic, CosmeticFlags, User},
+    app_state::{AppState, Cosmetic, User},
     messages::InternalMessages,
     ws::ws_handler,
 };
@@ -35,7 +35,7 @@ mod metrics;
 
 pub use error::Result;
 
-const COSMETIC_FILE: Lazy<String> =
+static COSMETIC_FILE: Lazy<String> =
     Lazy::new(|| env::var("COSMETICS_FILE").unwrap_or_else(|_| "cosmetics.json".to_owned()));
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct CosmeticFile {
@@ -44,13 +44,11 @@ pub struct CosmeticFile {
 }
 
 async fn retrieve_cosmetics() -> CosmeticFile {
-    let result = if let Ok(file) = &tokio::fs::read_to_string(&*COSMETIC_FILE).await {
-        serde_json::from_str(&file).expect("Failed to parse cosmetics.json")
+    if let Ok(file) = &tokio::fs::read_to_string(&*COSMETIC_FILE).await {
+        serde_json::from_str(file).expect("Failed to parse cosmetics.json")
     } else {
         CosmeticFile::default()
-    };
-
-    result
+    }
 }
 
 #[tokio::main]
