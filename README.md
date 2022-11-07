@@ -9,7 +9,47 @@ cargo run --release
 
 ## Rest
 
-See the insomnia docs
+### GET `/cosmetics`
+
+```json
+{
+  "cosmetics": [
+    {
+      "description": "White",
+      "display": "WW",
+      "id": 1,
+      "name": "W",
+      "required_flags": 1
+    }
+  ],
+  "users": { "41a9b6aa-168a-4be8-8df8-cac17daf7384": 1 }
+}
+```
+
+### POST `/broadcast`
+
+to requires a list of uuids or nothing to send to all users.
+
+```
+authorization: $BROADCAST_SECRET
+```
+
+```json
+{
+  "message": "Hello world",
+  "to": []
+}
+```
+
+---
+
+```
+Ok
+```
+
+### GET `/metrics`
+
+Returns a bunch of prometheus metrics
 
 ## Websockets
 
@@ -94,41 +134,42 @@ Nonces are a optional field
   "t": "/pong"
 }
 ```
+
 ### Update cosmetic
 
 ```json
 {
-	"t": "/cosmetics/update",
-	"c": {
-		"cosmetic_id": 1,
-		"nonce": "hi1"
-	}
+  "t": "/cosmetics/update",
+  "c": {
+    "cosmetic_id": 1,
+    "nonce": "hi1"
+  }
 }
 ```
+
 ---
 
 ```json
 {
-	"t": "/cosmetics/updated",
-	"c": {
-		"cosmetic_id": 1,
-		"nonce": "hi1"
-	}
+  "t": "/cosmetics/updated",
+  "c": {
+    "cosmetic_id": 1,
+    "nonce": "hi1"
+  }
 }
 ```
 
 ### Cosmetic Ack event
 
-It is suggested to update cosmetics between 1-5 minutes after this even is received to account for any other updates and to not trigger ddos protection.
+It is suggested to update cosmetics between 1-5 minutes after this event is received to account for any other updates and to not trigger ddos protection.
 
 ---
 
 ```json
 {
-	"t": "/cosmetics/ack"
+  "t": "/cosmetics/ack"
 }
 ```
-
 
 ### Broadcasts
 
@@ -142,6 +183,7 @@ Broadcasts are only received not send you can view the broadcast post request to
   "c": "Hello world"
 }
 ```
+
 ### Errors
 
 Errors are only recieved and look like this, errors can include a nonce for when necessary
@@ -150,10 +192,10 @@ Errors are only recieved and look like this, errors can include a nonce for when
 
 ```json
 {
-	"t": "/error",
-	"c": {
-		"error": "Already connected"
-	}
+  "t": "/error",
+  "c": {
+    "error": "Already connected"
+  }
 }
 ```
 
