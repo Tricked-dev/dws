@@ -11,7 +11,7 @@ use futures_util::{SinkExt, StreamExt};
 use uuid::Uuid;
 
 use crate::{
-    app_state::AppState,
+    app_state::{self, AppState},
     messages::{parse_ws_message, to_ws_message, InternalMessages, Messages},
     Result,
 };
@@ -51,16 +51,35 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     // Subscribe before sending joined message.
     let mut rx = state.tx.subscribe();
 
-    // Send joined message to all subscribers.
-    let _msg = format!("{} joined.", uuid);
-
     // This task will receive broadcast messages and send text message to our client.
     let mut send_task = tokio::spawn(async move {
         while let Ok(msg) = rx.recv().await {
             match msg {
                 InternalMessages::UserInvalidJson { requester_id, error } => {
                     if requester_id == uuid {
-                        let _ = sender.send(to_ws_message(Messages::Error(error))).await;
+                        let _ = sender.send(to_ws_message(Messages::Error { error, nonce: None })).await;
+                    }
+                }
+                InternalMessages::UserError {
+                    requester_id,
+                    error,
+                    nonce,
+                } => {
+                    if requester_id == uuid {
+                        let _ = sender.send(to_ws_message(Messages::Error { error, nonce })).await;
+                    }
+                }
+                InternalMessages::CosmeticsUpdate {
+                    requester_id,
+                    cosmetic_id,
+                    nonce,
+                } => {
+                    if requester_id == uuid {
+                        let _ = sender
+                            .send(to_ws_message(Messages::CosmeticsUpdated { cosmetic_id, nonce }))
+                            .await;
+                    } else {
+                        let _ = sender.send(to_ws_message(Messages::CosmeticAck)).await;
                     }
                 }
                 InternalMessages::UserRequestResponse {
@@ -108,17 +127,18 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                 _ => {}
             }
         }
-        println!("HI!")
     });
 
     // Clone things we want to pass to the receiving task.
     let tx = state.tx.clone();
 
     // This task will receive messages from client and send them to broadcast subscribers.
+    let state_clone = state.clone();
     let mut recv_task = tokio::spawn(async move {
+        let state = state_clone;
         while let Some(Ok(Message::Text(text))) = receiver.next().await {
             let msg = parse_ws_message(&text);
-            tracing::debug!("{}", text);
+            tracing::debug!("{uuid} {}", text);
             match msg {
                 Some(Messages::Connect(_)) => {
                     let _ = tx.send(InternalMessages::UserInvalidJson {
@@ -126,10 +146,10 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                         error: "Already connected".to_owned(),
                     });
                 }
-                Some(Messages::Error(e)) => {
+                Some(Messages::Error { error, .. }) => {
                     let _ = tx.send(InternalMessages::UserInvalidJson {
                         requester_id: uuid,
-                        error: e,
+                        error,
                     });
                 }
                 Some(Messages::IsOnline { uuid: user_id, nonce }) => {
@@ -148,6 +168,54 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                 }
                 Some(Messages::Ping(nonce)) => {
                     let _ = tx.send(InternalMessages::Pong { nonce, uuid });
+                }
+                Some(Messages::CosmeticsUpdate { cosmetic_id, nonce }) => {
+                    let mut users = state.users.lock();
+                    let user = users.get(&uuid);
+                    let mut user = match user {
+                        Some(user) => user.clone(),
+                        None => {
+                            let _ = tx.send(InternalMessages::UserError {
+                                requester_id: uuid,
+                                error: "You dont have any cosmetcs".to_owned(),
+                                nonce,
+                            });
+                            continue;
+                        }
+                    };
+                    user.enabled_prefix = if let Some(cosmetic_id) = cosmetic_id {
+                        let cosmetics = state.cosmetics.lock();
+                        let cosmetic = cosmetics.iter().find(|c| c.id == cosmetic_id);
+                        let cosmetic = match cosmetic {
+                            Some(cosmetic) => cosmetic,
+                            None => {
+                                let _ = tx.send(InternalMessages::UserError {
+                                    requester_id: uuid,
+                                    error: "Cosmetic not found".to_owned(),
+                                    nonce,
+                                });
+                                continue;
+                            }
+                        };
+                        if !user.flags.contains(cosmetic.required_flags) {
+                            let _ = tx.send(InternalMessages::UserError {
+                                requester_id: uuid,
+                                error: "You dont have this cosmetics".to_owned(),
+                                nonce,
+                            });
+                            continue;
+                        }
+                        Some(cosmetic_id)
+                    } else {
+                        None
+                    };
+                    users.insert(uuid, user);
+
+                    let _ = tx.send(InternalMessages::CosmeticsUpdate {
+                        cosmetic_id,
+                        nonce,
+                        requester_id: uuid,
+                    });
                 }
 
                 _ => {}

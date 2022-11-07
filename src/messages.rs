@@ -29,13 +29,25 @@ pub enum Messages {
     #[serde(rename = "/connected")]
     ConnectedResponse(bool),
     #[serde(rename = "/error")]
-    Error(String),
+    Error { error: String, nonce: Option<String> },
     #[serde(rename = "/broadcast")]
     Broadcast(String),
     #[serde(rename = "/ping")]
     Ping(Option<String>),
     #[serde(rename = "/pong")]
     Pong(Option<String>),
+    #[serde(rename = "/cosmetics/update")]
+    CosmeticsUpdate {
+        cosmetic_id: Option<u8>,
+        nonce: Option<String>,
+    },
+    #[serde(rename = "/cosmetics/updated")]
+    CosmeticsUpdated {
+        cosmetic_id: Option<u8>,
+        nonce: Option<String>,
+    },
+    #[serde(rename = "/cosmetics/ack")]
+    CosmeticAck,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -75,6 +87,16 @@ pub enum InternalMessages {
         nonce: Option<String>,
         uuid: Uuid,
     },
+    CosmeticsUpdate {
+        requester_id: Uuid,
+        cosmetic_id: Option<u8>,
+        nonce: Option<String>,
+    },
+    UserError {
+        requester_id: Uuid,
+        error: String,
+        nonce: Option<String>,
+    },
 }
 
 pub fn parse_ws_message(msg: &str) -> Option<Messages> {
@@ -83,7 +105,10 @@ pub fn parse_ws_message(msg: &str) -> Option<Messages> {
         Ok(msg) => Some(msg),
         Err(e) => {
             tracing::error!("Error parsing message: {}", e);
-            Some(Messages::Error(e.to_string()))
+            Some(Messages::Error {
+                error: e.to_string(),
+                nonce: None,
+            })
         }
     }
 }
