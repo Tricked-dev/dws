@@ -1,5 +1,4 @@
 use bitflags::bitflags;
-
 use serde::{Deserialize, Serialize, Serializer};
 
 bitflags! {

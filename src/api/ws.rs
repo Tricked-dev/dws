@@ -8,6 +8,8 @@ use axum::{
     response::IntoResponse,
 };
 use futures_util::{SinkExt, StreamExt};
+use governor::{Quota, RateLimiter};
+use std::num::NonZeroU32;
 use uuid::Uuid;
 
 use crate::{
@@ -28,6 +30,9 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     let _start = Instant::now();
     let (mut sender, mut receiver) = stream.split();
     let mut uuid: Option<Uuid> = None;
+
+    let lim = RateLimiter::direct(Quota::per_minute(unsafe { NonZeroU32::new_unchecked(20u32) })); // Allow 50 units per second
+
     while let Some(Ok(message)) = receiver.next().await {
         if let Message::Text(txt) = message {
             tracing::info!("{:?}", parse_ws_message(&txt));
@@ -137,6 +142,10 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     let mut recv_task = tokio::spawn(async move {
         let state = state_clone;
         while let Some(Ok(Message::Text(text))) = receiver.next().await {
+            if let Err(e) = lim.check() {
+                tracing::error!("Rate limit exceeded: {}", e);
+                continue;
+            }
             let msg = parse_ws_message(&text);
             tracing::debug!("{uuid} {}", text);
             match msg {
