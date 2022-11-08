@@ -14,6 +14,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::{
     api::*,
     app_state::AppState,
+    commands::register,
     error::Result,
     messages::InternalMessages,
     utils::{
@@ -24,6 +25,7 @@ use crate::{
 
 pub mod app_state;
 pub mod bitflags;
+pub mod commands;
 pub mod error;
 pub mod messages;
 pub mod utils;
@@ -38,7 +40,7 @@ async fn main() -> Result<()> {
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
-
+    register().await?;
     let user_set = Mutex::new(HashSet::new());
     let (tx, mut rx) = tokio_broadcast::channel::<InternalMessages>(100);
 
@@ -76,6 +78,7 @@ async fn main() -> Result<()> {
         .route("/metrics", get(metrics::metrics))
         .route("/broadcast", post(broadcast::broadcast))
         .route("/cosmetics", get(cosmetics::cosmetics))
+        .route("/discord", post(discord::handle_request))
         .route("/ws", get(ws::ws_handler));
     let host = std::env::var("HOST").unwrap_or_else(|_| "127.0.0.1".into());
     let port = std::env::var("PORT").unwrap_or_else(|_| "3000".into());

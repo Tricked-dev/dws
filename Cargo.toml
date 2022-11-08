@@ -29,3 +29,4 @@ tower = { version = "0.4", features = [] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.2.1", features = ["v4", "serde"] }
+serenity = { git="https://github.com/serenity-rs/serenity",  rev="a01ee32ca77deed1be002ff7a14a53e2d8fac941", features=["builder", "http", "interactions_endpoint"] }
