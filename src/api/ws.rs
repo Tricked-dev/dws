@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 use crate::{
     app_state::AppState,
+    config::RATELIMIT_PER_MINUTE,
     messages::{parse_ws_message, to_ws_message, InternalMessages, Messages},
     Result,
 };
@@ -31,7 +32,7 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     let (mut sender, mut receiver) = stream.split();
     let mut uuid: Option<Uuid> = None;
 
-    let lim = RateLimiter::direct(Quota::per_minute(unsafe { NonZeroU32::new_unchecked(20u32) })); // Allow 50 units per second
+    let lim = RateLimiter::direct(*RATELIMIT_PER_MINUTE);
 
     while let Some(Ok(message)) = receiver.next().await {
         if let Message::Text(txt) = message {
@@ -240,6 +241,6 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
 
     tracing::debug!("{} disconnected from the website", uuid,);
     state.user_set.lock().remove(&uuid);
-    println!("{:?}", state.user_set.lock());
+    tracing::info!("TOTAL: {}", state.user_set.lock().len());
     Ok(())
 }

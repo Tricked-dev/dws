@@ -10,16 +10,14 @@ use once_cell::sync::Lazy;
 use serde_json::json;
 use serenity::{builder::*, interactions_endpoint::Verifier, model::application::interaction::*};
 
-use crate::{app_state::AppState, commands::handle_command};
+use crate::{app_state::AppState, commands::handle_command, config::DISCORD_PUBLIC_KEY};
 
 pub async fn handle_request(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     body_bytes: Bytes,
-    // Json(message): Json<Interaction>,
 ) -> impl IntoResponse {
-    static VERIFIER: Lazy<Verifier> =
-        Lazy::new(|| Verifier::new("3858e1ae52079e410c3a0c8f3b985863057ef6025305b4be334d42e13ab66673"));
+    static VERIFIER: Lazy<Verifier> = Lazy::new(|| Verifier::new(&DISCORD_PUBLIC_KEY));
     let find_header = |name| headers.get(name).and_then(|v| v.to_str().ok());
     let signature = find_header("X-Signature-Ed25519")
         .ok_or("missing signature header")

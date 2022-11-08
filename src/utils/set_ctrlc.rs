@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use crate::{
-    app_state::AppState,
-    utils::retrieve_cosmetics::{CosmeticFile, COSMETIC_FILE},
-};
+use crate::{app_state::AppState, config::COSMETICS_FILE, utils::retrieve_cosmetics::CosmeticFile};
 
 pub fn set_ctrlc(app_state_clone: Arc<AppState>) -> crate::Result<()> {
     ctrlc::set_handler(move || {
@@ -12,7 +9,7 @@ pub fn set_ctrlc(app_state_clone: Arc<AppState>) -> crate::Result<()> {
             users: app_state_clone.users.lock().clone(),
         };
         tracing::info!("Exiting...");
-        std::fs::write(COSMETIC_FILE.as_str(), serde_json::to_string_pretty(&file).unwrap())
+        std::fs::write(COSMETICS_FILE.as_str(), serde_json::to_string_pretty(&file).unwrap())
             .expect("Failed to write cosmetics file");
         tracing::info!("Cosmetics file written");
         std::process::exit(0);

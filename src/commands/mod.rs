@@ -1,21 +1,19 @@
-use std::{env, sync::Arc};
+use std::sync::Arc;
 
 use once_cell::sync::Lazy;
-use serenity::{
-    builder::*,
-    http::Http,
-    model::{application::interaction::application_command::*, prelude::ApplicationId},
-};
+use serenity::{builder::*, http::Http, model::application::interaction::application_command::*};
 
-use crate::{app_state::AppState, Result};
+use crate::{
+    app_state::AppState,
+    config::{DISCORD_CLIENT_ID, DISCORD_TOKEN},
+    Result,
+};
 
 mod users;
 
 static REST: Lazy<Http> = Lazy::new(|| {
-    let http = Http::new(&std::env::var("DISCORD_TOKEN").unwrap());
-    http.set_application_id(ApplicationId::new(
-        env::var("DISCORD_ID").unwrap().parse::<u64>().unwrap(),
-    ));
+    let http = Http::new(&DISCORD_TOKEN);
+    http.set_application_id(*DISCORD_CLIENT_ID);
     http
 });
 

@@ -15,10 +15,11 @@ use crate::{
     api::*,
     app_state::AppState,
     commands::register,
+    config::{BROADCAST_SECRET, COSMETICS_FILE, HOST, PORT},
     error::Result,
     messages::InternalMessages,
     utils::{
-        retrieve_cosmetics::{retrieve_cosmetics, CosmeticFile, COSMETIC_FILE},
+        retrieve_cosmetics::{retrieve_cosmetics, CosmeticFile},
         set_ctrlc,
     },
 };
@@ -26,6 +27,7 @@ use crate::{
 pub mod app_state;
 pub mod bitflags;
 pub mod commands;
+pub mod config;
 pub mod error;
 pub mod messages;
 pub mod utils;
@@ -49,7 +51,7 @@ async fn main() -> Result<()> {
     let app_state = Arc::new(AppState {
         user_set,
         tx: tx.clone(),
-        broadcast_secret: std::env::var("BROADCAST_SECRET").unwrap_or_else(|_| "secret".into()),
+        broadcast_secret: BROADCAST_SECRET.to_string(),
         cosmetics: Mutex::new(cosmetics.cosmetics),
         users: Mutex::new(cosmetics.users),
     });
@@ -67,7 +69,7 @@ async fn main() -> Result<()> {
                 cosmetics: app_state_clone.cosmetics.lock().clone(),
                 users: app_state_clone.users.lock().clone(),
             };
-            tokio::fs::write(COSMETIC_FILE.as_str(), serde_json::to_string_pretty(&file).unwrap())
+            tokio::fs::write(COSMETICS_FILE.as_str(), serde_json::to_string_pretty(&file).unwrap())
                 .await
                 .expect("Failed to write cosmetics file");
         }
@@ -80,10 +82,8 @@ async fn main() -> Result<()> {
         .route("/cosmetics", get(cosmetics::cosmetics))
         .route("/discord", post(discord::handle_request))
         .route("/ws", get(ws::ws_handler));
-    let host = std::env::var("HOST").unwrap_or_else(|_| "127.0.0.1".into());
-    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".into());
-    // run it with hyper
-    let addr = format!("{host}:{port}").parse().unwrap();
+
+    let addr = format!("{host}:{port}", host = *HOST, port = *PORT).parse().unwrap();
     tracing::debug!("listening on {}", addr);
     let (r, _) = join(axum::Server::bind(&addr).serve(app.into_make_service()), async {
         while let Ok(msg) = rx.recv().await {
