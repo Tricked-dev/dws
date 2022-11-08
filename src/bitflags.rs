@@ -9,6 +9,9 @@ bitflags! {
         const CONTRIBUTOR   = 0b00000100;
         const EARLY_USER    = 0b00001000;
         const BETA_TESTER   = 0b00010000;
+        const SUPPORTER     = 0b00100000;
+        const CLAIMED_ONE   = 0b01000000;
+        const CLAIMED_TWOO  = 0b10000000;
     }
 }
 
