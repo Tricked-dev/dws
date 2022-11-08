@@ -1,22 +1,29 @@
 [package]
-name = "dws"
-version = "0.1.0"
 edition = "2021"
 license = "MPL-2.0"
+name = "dws"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 axum = { version = "0.6.0-rc.2", features = ["ws", "macros", "headers"] }
-bitflags = "1.3.2"
-ctrlc = "3.2.3"
-futures-util = { version = "0.3.25", default-features = false }
-governor = "0.5.0"
-once_cell = { version = "1.16.0", features = ["parking_lot"] }
-parking_lot = { version = "0.12.1", features = ["serde"] }
-procfs = { version = "0.14.1", default-features = false }
-serde = { version = "1.0.147", features = ["derive"] }
-serde_json = "1.0.87"
-serde_with = { version = "2.0.1", features = ["json"] }
+bitflags = "1.3"
+ctrlc = "3.2"
+futures-util = { version = "0.3", default-features = false }
+governor = "0.5"
+once_cell = { version = "1.16", features = ["parking_lot"] }
+parking_lot = { version = "0.12", features = ["serde"] }
+procfs = { version = "0.14", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_with = { version = "2", features = ["json"] }
+serenity = { git = "https://github.com/serenity-rs/serenity", rev = "a01ee32ca77deed1be002ff7a14a53e2d8fac941", default-features = false, features = [
+    "builder",
+    "http",
+    "interactions_endpoint",
+    "model",
+    "rustls_backend",
+] }
 tokio = { version = "1.0", features = [
     "tracing",
     "rt-multi-thread",
@@ -29,4 +36,3 @@ tower = { version = "0.4", features = [] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.2.1", features = ["v4", "serde"] }
-serenity = { git="https://github.com/serenity-rs/serenity",  rev="a01ee32ca77deed1be002ff7a14a53e2d8fac941", features=["builder", "http", "interactions_endpoint"] }
