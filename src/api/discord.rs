@@ -25,9 +25,7 @@ pub async fn handle_request(
         bail!("invalid signature");
     }
 
-    // Build Discord response
     let response = match serde_json::from_slice::<Interaction>(&body_bytes).unwrap() {
-        // Discord rejects the interaction endpoints URL if pings are not acknowledged
         Interaction::Ping(_) => CreateInteractionResponse::Pong,
         Interaction::Command(interaction) => handle_command(interaction, state),
         _ => {
