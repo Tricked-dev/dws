@@ -8,8 +8,7 @@ use axum::{
     response::IntoResponse,
 };
 use futures_util::{SinkExt, StreamExt};
-use governor::{Quota, RateLimiter};
-use std::num::NonZeroU32;
+use governor::RateLimiter;
 use uuid::Uuid;
 
 use crate::{

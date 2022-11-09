@@ -9,6 +9,7 @@ use crate::{
     Result,
 };
 
+mod change_perms;
 mod users;
 
 static REST: Lazy<Http> = Lazy::new(|| {
@@ -20,12 +21,13 @@ static REST: Lazy<Http> = Lazy::new(|| {
 pub fn handle_command(interaction: CommandInteraction, state: Arc<AppState>) -> CreateInteractionResponse {
     let res = match interaction.data.name.as_str() {
         "users" => users::run(interaction, state),
+        "change_perms" => change_perms::run(interaction, state),
         _ => CreateInteractionResponseMessage::new().content("404 command not found lol".to_string()),
     };
     CreateInteractionResponse::Message(res)
 }
 pub async fn register() -> Result<()> {
-    REST.create_global_application_commands(&vec![users::register()])
+    REST.create_global_application_commands(&vec![users::register(), change_perms::register()])
         .await?;
     Ok(())
 }
