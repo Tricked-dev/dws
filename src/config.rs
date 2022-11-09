@@ -1,6 +1,6 @@
 use governor::Quota;
 use once_cell::sync::Lazy;
-use serenity::model::prelude::ApplicationId;
+use serenity::model::prelude::{ApplicationId, RoleId};
 
 const HOST_CONST: &str = "HOST";
 const PORT_CONST: &str = "PORT";
@@ -10,6 +10,7 @@ const RATELIMIT_PER_MINUTE_CONST: &str = "RATELIMIT_PER_MINUTE";
 const DISCORD_TOKEN_CONST: &str = "DISCORD_TOKEN";
 const DISCORD_CLIENT_ID_CONST: &str = "DISCORD_CLIENT_ID";
 const DISCORD_PUBLIC_KEY_CONST: &str = "DISCORD_PUBLIC_KEY";
+const DISCORD_ADMIN_ROLE_CONST: &str = "DISCORD_ADMIN_ROLE";
 
 pub static HOST: Lazy<String> = Lazy::new(|| std::env::var(HOST_CONST).unwrap_or_else(|_| "127.0.0.1".into()));
 pub static PORT: Lazy<u16> = Lazy::new(|| {
@@ -39,6 +40,15 @@ pub static DISCORD_CLIENT_ID: Lazy<ApplicationId> = Lazy::new(|| {
 
 pub static DISCORD_PUBLIC_KEY: Lazy<String> =
     Lazy::new(|| std::env::var(DISCORD_PUBLIC_KEY_CONST).expect("DISCORD_PUBLIC_KEY not set"));
+
+pub static DISCORD_ADMIN_ROLE: Lazy<RoleId> = Lazy::new(|| {
+    RoleId::from(
+        std::env::var(DISCORD_ADMIN_ROLE_CONST)
+            .unwrap_or("1".into())
+            .parse::<u64>()
+            .expect("Failed to parse DISCORD_ADMIN_ROLE"),
+    )
+});
 
 pub static RATELIMIT_PER_MINUTE: Lazy<Quota> = Lazy::new(|| {
     Quota::per_minute(

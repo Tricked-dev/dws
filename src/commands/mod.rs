@@ -5,7 +5,7 @@ use serenity::{builder::*, http::Http, model::application::interaction::applicat
 
 use crate::{
     app_state::AppState,
-    config::{DISCORD_CLIENT_ID, DISCORD_TOKEN},
+    config::{DISCORD_ADMIN_ROLE, DISCORD_CLIENT_ID, DISCORD_TOKEN},
     Result,
 };
 
@@ -19,9 +19,11 @@ static REST: Lazy<Http> = Lazy::new(|| {
 });
 
 pub fn handle_command(interaction: CommandInteraction, state: Arc<AppState>) -> CreateInteractionResponse {
-    let res = match interaction.data.name.as_str() {
-        "users" => users::run(interaction, state),
-        "change_perms" => change_perms::run(interaction, state),
+    let roles = interaction.member.clone().map(|x| x.roles).unwrap();
+    let admin = roles.contains(&*DISCORD_ADMIN_ROLE);
+    let res = match (interaction.data.name.as_str(), admin) {
+        ("users", _) => users::run(interaction, state),
+        ("change_perms", true) => change_perms::run(interaction, state),
         _ => CreateInteractionResponseMessage::new().content("404 command not found lol".to_string()),
     };
     CreateInteractionResponse::Message(res)
