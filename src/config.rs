@@ -44,7 +44,7 @@ pub static DISCORD_PUBLIC_KEY: Lazy<String> =
 pub static DISCORD_ADMIN_ROLE: Lazy<RoleId> = Lazy::new(|| {
     RoleId::from(
         std::env::var(DISCORD_ADMIN_ROLE_CONST)
-            .unwrap_or("1".into())
+            .unwrap_or_else(|_| "1".into())
             .parse::<u64>()
             .expect("Failed to parse DISCORD_ADMIN_ROLE"),
     )

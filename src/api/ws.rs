@@ -21,7 +21,7 @@ use crate::{
 pub async fn ws_handler(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) -> impl IntoResponse {
     ws.on_upgrade(|socket| async move {
         if let Err(e) = handle_socket(socket, state).await {
-            tracing::error!("Error handling socket: {}", e);
+            tracing::error!("Error handling socket: {:?}", e);
         };
     })
 }
