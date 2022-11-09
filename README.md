@@ -8,9 +8,9 @@
 export BROADCAST_SECRET="supersecretkey"
 export PORT="3000"
 export HOST="0.0.0.0"
-export PUBLIC_KEY=
+export DISCORD_PUBLIC_KEY=
 export DISCORD_TOKEN=
-export DISCORD_ID=
+export DISCORD_CLIENT_ID=
 cargo run --release
 ```
 
