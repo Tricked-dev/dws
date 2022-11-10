@@ -21,7 +21,7 @@ use crate::{
     messages::InternalMessages,
     utils::{
         retrieve_cosmetics::{retrieve_cosmetics, CosmeticFile},
-        set_ctrlc,
+        set_ctrlc, uuid_to_username,
     },
 };
 
@@ -104,10 +104,19 @@ async fn main() -> Result<()> {
                     };
                     let _ = tx.send(msg);
                 }
-                InternalMessages::IrcCreate { message, sender, date } => match *DISCORD_IRC_CHANNEL {
+                InternalMessages::IrcCreate {
+                    message,
+                    sender,
+                    date: _,
+                } => match *DISCORD_IRC_CHANNEL {
                     Some(channel) => {
+                        let username = if let Ok(r) = uuid_to_username(sender).await {
+                            r.name
+                        } else {
+                            continue;
+                        };
                         channel
-                            .send_message(&*REST, CreateMessage::new().content(format!("{}: {}", sender, message)))
+                            .send_message(&*REST, CreateMessage::new().content(format!("{username}: {}", message)))
                             .await
                             .unwrap();
                     }
