@@ -12,7 +12,7 @@ use crate::{
 mod change_perms;
 mod users;
 
-static REST: Lazy<Http> = Lazy::new(|| {
+pub static REST: Lazy<Http> = Lazy::new(|| {
     let http = Http::new(&DISCORD_TOKEN);
     http.set_application_id(*DISCORD_CLIENT_ID);
     http

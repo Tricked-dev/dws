@@ -1,4 +1,8 @@
-use std::{sync::Arc, time::Instant};
+use std::{
+    num::NonZeroU32,
+    sync::Arc,
+    time::{Instant, SystemTime, UNIX_EPOCH},
+};
 
 use axum::{
     extract::{
@@ -8,13 +12,14 @@ use axum::{
     response::IntoResponse,
 };
 use futures_util::{SinkExt, StreamExt};
-use governor::RateLimiter;
+use governor::{Quota, RateLimiter};
 use uuid::Uuid;
 
 use crate::{
     app_state::AppState,
     config::RATELIMIT_PER_MINUTE,
     messages::{parse_ws_message, to_ws_message, InternalMessages, Messages},
+    utils::sanitize::sanitize_message,
     Result,
 };
 
@@ -32,6 +37,8 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     let mut uuid: Option<Uuid> = None;
 
     let lim = RateLimiter::direct(*RATELIMIT_PER_MINUTE);
+    let irclim =
+        RateLimiter::direct(Quota::per_minute(NonZeroU32::new(4).unwrap()).allow_burst(NonZeroU32::new(8).unwrap()));
 
     while let Some(Ok(message)) = receiver.next().await {
         if let Message::Text(txt) = message {
@@ -128,6 +135,18 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                         continue;
                     }
                     let _ = sender.send(to_ws_message(Messages::Pong(nonce))).await;
+                }
+                InternalMessages::IrcCreate {
+                    message,
+                    sender: user,
+                    date,
+                } => {
+                    let msg = Messages::IrcCreated {
+                        message,
+                        date,
+                        sender: user,
+                    };
+                    let _ = sender.send(to_ws_message(msg)).await;
                 }
                 _ => {}
             }
@@ -226,7 +245,17 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                         requester_id: uuid,
                     });
                 }
-
+                Some(Messages::IrcCreate { message }) => {
+                    if let Err(e) = irclim.check() {
+                        tracing::error!("Rate limit exceeded: {}", e);
+                        continue;
+                    }
+                    let _ = tx.send(InternalMessages::IrcCreate {
+                        message: sanitize_message(&message),
+                        sender: uuid,
+                        date: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis(),
+                    });
+                }
                 _ => {}
             }
         }

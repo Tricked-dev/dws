@@ -51,4 +51,9 @@ pub enum InternalMessages {
         error: String,
         nonce: Option<String>,
     },
+    IrcCreate {
+        message: String,
+        sender: Uuid,
+        date: u128,
+    },
 }

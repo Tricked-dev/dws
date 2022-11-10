@@ -47,4 +47,8 @@ pub enum Messages {
     },
     #[serde(rename = "/cosmetics/ack")]
     CosmeticAck,
+    #[serde(rename = "/irc/create")]
+    IrcCreate { message: String },
+    #[serde(rename = "/irc/created")]
+    IrcCreated { message: String, sender: Uuid, date: u128 },
 }

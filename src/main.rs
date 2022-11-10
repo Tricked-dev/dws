@@ -8,14 +8,15 @@ use axum::{
 };
 use futures_util::future::join;
 use parking_lot::Mutex;
+use serenity::builder::CreateMessage;
 use tokio::sync::broadcast as tokio_broadcast;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     api::*,
     app_state::AppState,
-    commands::register,
-    config::{BROADCAST_SECRET, COSMETICS_FILE, HOST, PORT},
+    commands::{register, REST},
+    config::{BROADCAST_SECRET, COSMETICS_FILE, DISCORD_IRC_CHANNEL, HOST, PORT},
     error::Result,
     messages::InternalMessages,
     utils::{
@@ -103,6 +104,15 @@ async fn main() -> Result<()> {
                     };
                     let _ = tx.send(msg);
                 }
+                InternalMessages::IrcCreate { message, sender, date } => match *DISCORD_IRC_CHANNEL {
+                    Some(channel) => {
+                        channel
+                            .send_message(&*REST, CreateMessage::new().content(format!("{}: {}", sender, message)))
+                            .await
+                            .unwrap();
+                    }
+                    None => {}
+                },
                 InternalMessages::RequestUsersBulk {
                     user_ids,
                     requester_id,

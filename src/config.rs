@@ -1,6 +1,6 @@
 use governor::Quota;
 use once_cell::sync::Lazy;
-use serenity::model::prelude::{ApplicationId, RoleId};
+use serenity::model::prelude::{ApplicationId, ChannelId, RoleId};
 
 const HOST_CONST: &str = "HOST";
 const PORT_CONST: &str = "PORT";
@@ -11,6 +11,8 @@ const DISCORD_TOKEN_CONST: &str = "DISCORD_TOKEN";
 const DISCORD_CLIENT_ID_CONST: &str = "DISCORD_CLIENT_ID";
 const DISCORD_PUBLIC_KEY_CONST: &str = "DISCORD_PUBLIC_KEY";
 const DISCORD_ADMIN_ROLE_CONST: &str = "DISCORD_ADMIN_ROLE";
+const DISCORD_IRC_CHANNEL_CONST: &str = "DISCORD_IRC_CHANNEL";
+const DISCORD_LINKED_ROLE_CONST: &str = "DISCORD_LINKED_ROLE";
 
 pub static HOST: Lazy<String> = Lazy::new(|| std::env::var(HOST_CONST).unwrap_or_else(|_| "127.0.0.1".into()));
 pub static PORT: Lazy<u16> = Lazy::new(|| {
@@ -48,6 +50,18 @@ pub static DISCORD_ADMIN_ROLE: Lazy<RoleId> = Lazy::new(|| {
             .parse::<u64>()
             .expect("Failed to parse DISCORD_ADMIN_ROLE"),
     )
+});
+
+pub static DISCORD_IRC_CHANNEL: Lazy<Option<ChannelId>> = Lazy::new(|| {
+    std::env::var(DISCORD_IRC_CHANNEL_CONST)
+        .ok()
+        .map(|x| ChannelId::from(x.parse::<u64>().expect("Failed to parse DISCORD_IRC_CHANNEL")))
+});
+
+pub static DISCORD_LINKED_ROLE: Lazy<Option<RoleId>> = Lazy::new(|| {
+    std::env::var(DISCORD_LINKED_ROLE_CONST)
+        .ok()
+        .map(|x| RoleId::from(x.parse::<u64>().expect("Failed to parse DISCORD_LINKED_ROLE")))
 });
 
 pub static RATELIMIT_PER_MINUTE: Lazy<Quota> = Lazy::new(|| {
