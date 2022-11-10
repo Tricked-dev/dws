@@ -55,6 +55,7 @@ async fn main() -> Result<()> {
         broadcast_secret: BROADCAST_SECRET.to_string(),
         cosmetics: Mutex::new(cosmetics.cosmetics),
         users: Mutex::new(cosmetics.users),
+        irc_blacklist: Mutex::new(cosmetics.irc_blacklist),
     });
 
     set_ctrlc(app_state.clone())?;
@@ -69,6 +70,7 @@ async fn main() -> Result<()> {
             let file = CosmeticFile {
                 cosmetics: app_state_clone.cosmetics.lock().clone(),
                 users: app_state_clone.users.lock().clone(),
+                irc_blacklist: app_state_clone.irc_blacklist.lock().clone(),
             };
             tokio::fs::write(COSMETICS_FILE.as_str(), serde_json::to_string_pretty(&file).unwrap())
                 .await

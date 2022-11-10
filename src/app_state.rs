@@ -13,6 +13,7 @@ pub struct AppState {
     pub broadcast_secret: String,
     pub users: Mutex<HashMap<Uuid, User>>,
     pub cosmetics: Mutex<Vec<Cosmetic>>,
+    pub irc_blacklist: Mutex<HashSet<Uuid>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

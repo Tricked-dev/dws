@@ -10,6 +10,7 @@ use crate::{
 };
 
 mod change_perms;
+mod irc;
 mod users;
 
 pub static REST: Lazy<Http> = Lazy::new(|| {
@@ -18,18 +19,19 @@ pub static REST: Lazy<Http> = Lazy::new(|| {
     http
 });
 
-pub fn handle_command(interaction: CommandInteraction, state: Arc<AppState>) -> CreateInteractionResponse {
+pub async fn handle_command(interaction: CommandInteraction, state: Arc<AppState>) -> CreateInteractionResponse {
     let roles = interaction.member.clone().map(|x| x.roles).unwrap();
     let admin = roles.contains(&*DISCORD_ADMIN_ROLE);
     let res = match (interaction.data.name.as_str(), admin) {
         ("users", _) => users::run(interaction, state),
         ("change_perms", true) => change_perms::run(interaction, state),
+        ("irc", true) => irc::run(interaction, state).await,
         _ => CreateInteractionResponseMessage::new().content("404 command not found lol".to_string()),
     };
     CreateInteractionResponse::Message(res)
 }
 pub async fn register() -> Result<()> {
-    REST.create_global_application_commands(&vec![users::register(), change_perms::register()])
+    REST.create_global_application_commands(&vec![users::register(), change_perms::register(), irc::register()])
         .await?;
     Ok(())
 }

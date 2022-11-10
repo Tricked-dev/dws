@@ -246,10 +246,15 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                     });
                 }
                 Some(Messages::IrcCreate { message }) => {
+                    if state.irc_blacklist.lock().contains(&uuid) {
+                        continue;
+                    }
+
                     if let Err(e) = irclim.check() {
                         tracing::error!("Rate limit exceeded: {}", e);
                         continue;
                     }
+
                     let _ = tx.send(InternalMessages::IrcCreate {
                         message: sanitize_message(&message),
                         sender: uuid,

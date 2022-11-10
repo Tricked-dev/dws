@@ -178,6 +178,32 @@ It is suggested to update cosmetics between 1-5 minutes after this event is rece
 }
 ```
 
+### Irc
+
+The irc chat can be linked to discord and you can blacklist uuids from the irc using `/irc blacklist Add <uuid>`, if a user is blacklisted irc messages send by this user will be silently ignored.
+
+```json
+{
+  "t": "/irc/create",
+  "c": {
+    "message": "HI!"
+  }
+}
+```
+
+---
+
+```json
+{
+  "t": "/irc/created",
+  "c": {
+    "message": "HI!",
+    "sender": "41a9b6aa-168a-4be8-8df8-cac17daf7384",
+    "date": 1668109163235
+  }
+}
+```
+
 ### Broadcasts
 
 Broadcasts are only received not send you can view the broadcast post request to find out how those work

@@ -27,7 +27,7 @@ pub async fn handle_request(
 
     let response = match serde_json::from_slice::<Interaction>(&body_bytes).unwrap() {
         Interaction::Ping(_) => CreateInteractionResponse::Pong,
-        Interaction::Command(interaction) => handle_command(interaction, state),
+        Interaction::Command(interaction) => handle_command(interaction, state).await,
         _ => {
             bail!("unknown interaction type");
         }
