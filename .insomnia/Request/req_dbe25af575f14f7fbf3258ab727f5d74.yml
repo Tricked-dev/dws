@@ -1,0 +1,21 @@
+_id: req_dbe25af575f14f7fbf3258ab727f5d74
+type: Request
+parentId: fld_33377bf834134f62ab0de9fb77551fc1
+modified: 1668185408188
+created: 1668185405268
+url: "{{ _.url }}/cosmetics"
+name: Cosmetics
+description: ""
+method: GET
+body: {}
+parameters: []
+headers: []
+authentication: {}
+metaSortKey: -1665703715959.5
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

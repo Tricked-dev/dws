@@ -1,0 +1,21 @@
+_id: req_be0802dc49024da78073c18003317e5b
+type: Request
+parentId: fld_33377bf834134f62ab0de9fb77551fc1
+modified: 1668185463196
+created: 1668185431185
+url: "{{ _.url }}/discord"
+name: Discord
+description: This is used for the bot
+method: POST
+body: {}
+parameters: []
+headers: []
+authentication: {}
+metaSortKey: -1667660464854
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
