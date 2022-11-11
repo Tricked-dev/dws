@@ -1,1 +1,4 @@
 /target
+cosmetics.json
+.env
+wstest.ts

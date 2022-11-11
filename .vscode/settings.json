@@ -2,7 +2,9 @@
   "git.repositoryScanIgnoredFolders": ["./target/"],
   "git.ignoredRepositories": [
     "./target/*",
-    "~/.cargo/git/checkouts/axum-3a6345d9aff97fa3/a27bd2c"
+    "~/.cargo/git/checkouts/axum-3a6345d9aff97fa3/a27bd2c",
+    "~/.cargo/git/checkouts/serenity*"
   ],
-  "git.autoRepositoryDetection": "subFolders"
+  "git.autoRepositoryDetection": "subFolders",
+  "deno.enablePaths": ["wstest.ts"]
 }
