@@ -60,7 +60,7 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
         Some(uuid) => uuid,
         None => return Ok(()),
     };
-    let name = match name {
+    let _name = match name {
         Some(name) => name,
         None => return Ok(()),
     };

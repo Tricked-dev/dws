@@ -1,9 +1,6 @@
 use cfg_if::cfg_if;
 use serde::Deserialize;
 
-use serde_json::Value;
-use uuid::Uuid;
-
 use crate::{error::Result, utils::uuid_utils::username_to_uuid};
 
 use super::uuid_utils::UuidAndUsername;
