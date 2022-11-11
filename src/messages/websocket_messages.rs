@@ -13,7 +13,7 @@ pub enum Messages {
     #[serde(rename = "/is_online/bulk")]
     IsOnlineBulk { uuids: Vec<Uuid>, nonce: Option<String> },
     #[serde(rename = "/connect")]
-    Connect(Uuid),
+    Connect { server_id: String, username: String },
     #[serde(rename = "/is_online")]
     IsOnlineResponse {
         is_online: bool,

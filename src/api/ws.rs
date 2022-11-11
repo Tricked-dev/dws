@@ -19,7 +19,7 @@ use crate::{
     app_state::AppState,
     config::RATELIMIT_PER_MINUTE,
     messages::{parse_ws_message, to_ws_message, InternalMessages, Messages},
-    utils::sanitize::sanitize_message,
+    utils::{sanitize::sanitize_message, validate_session},
     Result,
 };
 
@@ -35,7 +35,7 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     let _start = Instant::now();
     let (mut sender, mut receiver) = stream.split();
     let mut uuid: Option<Uuid> = None;
-
+    let mut name: Option<String> = None;
     let lim = RateLimiter::direct(*RATELIMIT_PER_MINUTE);
     let irclim =
         RateLimiter::direct(Quota::per_minute(NonZeroU32::new(4).unwrap()).allow_burst(NonZeroU32::new(8).unwrap()));
@@ -43,10 +43,10 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     while let Some(Ok(message)) = receiver.next().await {
         if let Message::Text(txt) = message {
             tracing::info!("{:?}", parse_ws_message(&txt));
-            if let Some(Messages::Connect(uid)) = parse_ws_message(&txt) {
-                let mut user_set = state.user_set.lock();
-                user_set.insert(uid);
-                uuid = Some(uid);
+            if let Some(Messages::Connect { server_id, username }) = parse_ws_message(&txt) {
+                let data = validate_session(server_id, username).await?;
+                uuid = Some(data.id);
+                name = Some(data.name);
                 break;
             }
         }
@@ -58,6 +58,10 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     }
     let uuid = match uuid {
         Some(uuid) => uuid,
+        None => return Ok(()),
+    };
+    let name = match name {
+        Some(name) => name,
         None => return Ok(()),
     };
     // Subscribe before sending joined message.
@@ -168,7 +172,7 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
             let msg = parse_ws_message(&text);
             tracing::debug!("{uuid} {}", text);
             match msg {
-                Some(Messages::Connect(_)) => {
+                Some(Messages::Connect { .. }) => {
                     let _ = tx.send(InternalMessages::UserInvalidJson {
                         requester_id: uuid,
                         error: "Already connected".to_owned(),

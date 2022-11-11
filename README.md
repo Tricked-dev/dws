@@ -65,10 +65,15 @@ Nonces are a optional field
 
 ### Connecting
 
+for development none of this validated. server_id is expected to be a hashed server id that is needed for <https://wiki.vg/Protocol_Encryption#Authentication> 
+
 ```json
 {
-  "t": "/connect",
-  "c": "41a9b6aa-168a-4be8-8df8-cac17daf7384"
+    "t": "/connect",
+    "c": {
+			"server_id": "Hello world from irc ws lol",
+			"username": "trickedmc"
+		}
 }
 ```
 
