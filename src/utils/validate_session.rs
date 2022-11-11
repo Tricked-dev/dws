@@ -22,12 +22,14 @@ pub async fn validate_session(server_id: String, username: String) -> Result<Uui
         }
     }
 }
+
+#[allow(dead_code)]
 async fn validate_debug(username: String) -> Result<UuidAndUsername> {
     let uuid = username_to_uuid(username).await?;
     Ok(uuid)
 }
 
-#[allow(unused)]
+#[allow(dead_code)]
 async fn validate_release(server_id: String, username: String) -> Result<UuidAndUsername> {
     let r = reqwest::get(format!(
         "https://sessionserver.mojang.com/session/minecraft/hasJoined?username={}&serverId={}",
