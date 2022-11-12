@@ -31,7 +31,7 @@ jobs:
       - name: install nightly
         run: rustup toolchain install nightly && rustup component add rust-src --toolchain nightly
       - name: build
-        run: cargo build --release
+        run: cargo +nightly build --release
       - run: cp target/release/dws .
       - uses: actions/upload-artifact@v2
         with:
