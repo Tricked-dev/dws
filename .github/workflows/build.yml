@@ -1,0 +1,40 @@
+name: Build and upload artifacts.
+# ref https://github.com/Tricked-dev/dws/blob/master/.github/workflows/build.yml
+on:
+  push:
+    branches: [master]
+    paths:
+      - "**.rs"
+      - "**.toml"
+      - "**.yml"
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cargo Caching
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: install nightly
+        run: rustup toolchain install nightly && rustup component add rust-src --toolchain nightly
+      - name: build
+        run: cargo build --release
+      - run: cp target/release/dws .
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dws
+          path: ./dws
+          if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
