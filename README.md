@@ -14,6 +14,14 @@ export DISCORD_CLIENT_ID=
 cargo run --release
 ```
 
+## Features
+
+- [x] Discord bot
+- [x] Cosmetics
+- [x] Checking if players are online
+- [x] Irc
+- [x] Prometheus metrics
+
 ## Rest
 
 ### GET `/cosmetics`
@@ -22,11 +30,28 @@ cargo run --release
 {
   "cosmetics": [
     {
-      "description": "White",
-      "display": "WW",
+      "data": "&a",
+      "description": "Prefix: invis_test1",
+      "id": 0,
+      "name": "invis_test1",
+      "required_flags": 2,
+      "type": 1
+    },
+    {
+      "data": "§e",
+      "description": "Prefix: supporter2",
       "id": 1,
-      "name": "W",
-      "required_flags": 1
+      "name": "supporter2",
+      "required_flags": 32,
+      "type": 1
+    },
+    {
+      "data": "§b[l'élite]",
+      "description": "Prefix: invis_plexus3",
+      "id": 2,
+      "name": "invis_plexus3",
+      "required_flags": 2,
+      "type": 2
     }
   ],
   "users": { "41a9b6aa-168a-4be8-8df8-cac17daf7384": 1 }
@@ -65,15 +90,15 @@ Nonces are a optional field
 
 ### Connecting
 
-for development none of this validated. server_id is expected to be a hashed server id that is needed for <https://wiki.vg/Protocol_Encryption#Authentication> 
+for development none of this validated. server_id is expected to be a hashed server id that is needed for <https://wiki.vg/Protocol_Encryption#Authentication>
 
 ```json
 {
-    "t": "/connect",
-    "c": {
-			"server_id": "Hello world from irc ws lol",
-			"username": "trickedmc"
-		}
+  "t": "/connect",
+  "c": {
+    "server_id": "Hello world from irc ws lol",
+    "username": "trickedmc"
+  }
 }
 ```
 
@@ -239,23 +264,44 @@ Errors are only recieved and look like this, errors can include a nonce for when
 
 ## Cosmetics
 
-A cosmetics file looks something like this
+A cosmetics file looks something like this, The ran instance uses type 1 to identify colors and type 2 prefixes
 
 ```json
 {
   "cosmetics": [
     {
+      "data": "&a",
+      "description": "Prefix: invis_test1",
+      "id": 0,
+      "name": "invis_test1",
+      "required_flags": 2,
+      "type": 1
+    },
+    {
+      "data": "§e",
+      "description": "Prefix: supporter2",
       "id": 1,
-      "name": "W",
-      "display": "WW",
-      "description": "White",
-      "required_flags": 1
+      "name": "supporter2",
+      "required_flags": 32,
+      "type": 1
+    },
+    {
+      "data": "§b[l'élite]",
+      "description": "Prefix: invis_plexus3",
+      "id": 2,
+      "name": "invis_plexus3",
+      "required_flags": 2,
+      "type": 2
     }
   ],
   "users": {
-    "41a9b6aa-168a-4be8-8df8-cac17daf7384": {
-      "flags": 1,
-      "enabled_prefix": null
+    "a1937b73-ecff-4d6c-aa7b-6702b957dbd6": {
+      "flags": 8,
+      "enabled_prefix": 8
+    },
+    "4e29caf5-9317-454b-8863-eca22877e0ec": {
+      "flags": 8,
+      "enabled_prefix": 12
     }
   }
 }

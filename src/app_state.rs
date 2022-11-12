@@ -20,8 +20,10 @@ pub struct AppState {
 pub struct Cosmetic {
     pub id: u8,
     pub name: String,
-    pub display: String,
     pub description: String,
+    pub data: String,
+    #[serde(default, rename = "type")]
+    pub type_field: u8,
     pub required_flags: CosmeticFlags,
 }
 
