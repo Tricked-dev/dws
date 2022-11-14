@@ -1,6 +1,9 @@
 #![allow(clippy::single_match)]
 
-use std::{collections::HashSet, sync::Arc};
+use std::{
+    collections::HashSet,
+    sync::{atomic::AtomicU16, Arc},
+};
 
 use axum::{
     routing::{get, post},
@@ -56,6 +59,7 @@ async fn main() -> Result<()> {
         cosmetics: Mutex::new(cosmetics.cosmetics),
         users: Mutex::new(cosmetics.users),
         irc_blacklist: Mutex::new(cosmetics.irc_blacklist),
+        messages_sec: Arc::new(AtomicU16::new(0)),
     });
 
     set_ctrlc(app_state.clone())?;

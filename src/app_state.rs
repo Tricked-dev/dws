@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::{atomic::AtomicU16, Arc},
+};
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -13,6 +16,7 @@ pub struct AppState {
     pub broadcast_secret: String,
     pub users: Mutex<HashMap<Uuid, User>>,
     pub cosmetics: Mutex<Vec<Cosmetic>>,
+    pub messages_sec: Arc<AtomicU16>,
     pub irc_blacklist: Mutex<HashSet<Uuid>>,
 }
 

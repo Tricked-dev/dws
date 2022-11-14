@@ -10,7 +10,27 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     metrics.push_str(&prometheus_stat(
         "Connected users",
         "connected_users",
-        &format!("{}\n", &state.user_set.lock().len()),
+        &format!("{}", &state.user_set.lock().len()),
+    ));
+    metrics.push_str(&prometheus_stat(
+        "Blocked users",
+        "blocked_irc_users",
+        &format!("{}", &state.irc_blacklist.lock().len()),
+    ));
+    metrics.push_str(&prometheus_stat(
+        "Cosmetics count",
+        "cosmetics",
+        &format!("{}", &state.cosmetics.lock().len()),
+    ));
+    metrics.push_str(&prometheus_stat(
+        "Cosmetic User Count",
+        "cosmetic_users",
+        &format!("{}", &state.users.lock().len()),
+    ));
+    metrics.push_str(&prometheus_stat(
+        "Messages per second",
+        "messages_per_second",
+        &format!("{}", &state.messages_sec.load(std::sync::atomic::Ordering::Relaxed)),
     ));
     add_process_stats(&mut metrics);
     metrics
@@ -20,7 +40,7 @@ pub fn prometheus_stat<T>(help: &str, name: &str, value: T) -> String
 where
     T: std::fmt::Display,
 {
-    format!("# HELP {name} {help}\n{name} {value}\n")
+    format!("# HELP {name} {help}\n{name} {value}\n\n")
 }
 
 pub fn add_process_stats(r: &mut String) {

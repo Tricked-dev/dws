@@ -1,7 +1,7 @@
 use std::{
     num::NonZeroU32,
-    sync::Arc,
-    time::{Instant, SystemTime, UNIX_EPOCH},
+    sync::{atomic::Ordering, Arc},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 use axum::{
@@ -164,7 +164,18 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     let state_clone = state.clone();
     let mut recv_task = tokio::spawn(async move {
         let state = state_clone;
+
         while let Some(Ok(Message::Text(text))) = receiver.next().await {
+            tracing::debug!("Add message/s: {}", state.messages_sec.fetch_add(1, Ordering::SeqCst));
+            let state_clone = state.clone();
+            tokio::spawn(async move {
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                tracing::debug!(
+                    "Removing value prev: {}",
+                    state_clone.messages_sec.fetch_sub(1, Ordering::SeqCst)
+                )
+            });
+
             if let Err(e) = lim.check() {
                 tracing::error!("Rate limit exceeded: {}", e);
                 continue;
