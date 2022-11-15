@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use std::{
+    sync::Arc,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use serenity::{
     builder::{CreateCommand, CreateCommandOption, CreateInteractionResponseMessage},
@@ -6,56 +9,87 @@ use serenity::{
 };
 use uuid::Uuid;
 
-use crate::app_state::{AppState, User};
+use crate::{
+    app_state::{AppState, User},
+    messages::InternalMessages,
+    utils::{sanitize::sanitize_message, uuid_to_username},
+};
 
-pub async fn run(cmd: CommandInteraction, state: Arc<AppState>) -> CreateInteractionResponseMessage {
+pub async fn run(cmd: CommandInteraction, state: Arc<AppState>, admin: bool) -> CreateInteractionResponseMessage {
     let options = cmd.data.options();
     let sub = options.get(0).unwrap();
-    match sub.name {
-        "list" => {
+    let options = match sub.value.clone() {
+        ResolvedValue::SubCommand(v) => v,
+        _ => return CreateInteractionResponseMessage::new().content("Expected subcommand"),
+    };
+    match (sub.name, admin) {
+        ("list", true) => {
             let mut res = "Blacklisted uuids\n----------------\n".to_owned();
             for uuid in state.users.lock().iter().filter(|x| x.1.irc_blacklisted) {
                 res.push_str(&format!("{}\n", uuid.0));
             }
             CreateInteractionResponseMessage::new().content(res)
         }
-        "blacklist" => {
-            let options = sub.value.clone();
-            if let ResolvedValue::SubCommand(v) = options {
-                let add = v.get(0).unwrap().value.string() == "add";
-                let uuid = v.get(1).unwrap().value.string();
-                let uuid = match Uuid::parse_str(&uuid) {
-                    Ok(v) => v,
-                    Err(_) => return CreateInteractionResponseMessage::new().content("Invalid UUID".to_string()),
-                };
-                let mut users = state.users.lock();
+        ("blacklist", true) => {
+            let add = options.get(0).unwrap().value.string() == "add";
+            let uuid = options.get(1).unwrap().value.string();
+            let uuid = match Uuid::parse_str(&uuid) {
+                Ok(v) => v,
+                Err(_) => return CreateInteractionResponseMessage::new().content("Invalid UUID".to_string()),
+            };
+            let mut users = state.users.lock();
 
-                match users.get(&uuid) {
-                    Some(v) => {
-                        let mut user = v.clone();
-                        user.irc_blacklisted = add;
-                        users.insert(uuid, user);
-                    }
-                    None => {
-                        let user = User {
-                            irc_blacklisted: add,
-                            ..Default::default()
-                        };
-                        users.insert(uuid, user);
-                    }
-                };
+            match users.get(&uuid) {
+                Some(v) => {
+                    let mut user = v.clone();
+                    user.irc_blacklisted = add;
+                    users.insert(uuid, user);
+                }
+                None => {
+                    let user = User {
+                        irc_blacklisted: add,
+                        ..Default::default()
+                    };
+                    users.insert(uuid, user);
+                }
+            };
 
-                CreateInteractionResponseMessage::new().content(format!(
-                    "{} {} {} the blacklist",
-                    if add { "Added" } else { "Removed" },
-                    if add { "to" } else { "from" },
-                    uuid
-                ))
-            } else {
-                unreachable!()
+            CreateInteractionResponseMessage::new().content(format!(
+                "{} {} the blacklist",
+                if add { "Added to" } else { "Removed from" },
+                uuid
+            ))
+        }
+        ("send", _) => {
+            let users = state
+                .users
+                .lock()
+                .iter()
+                .find(|x| x.1.linked_discord == Some(cmd.user.id))
+                .map(|x| x.0.clone());
+
+            let uuid = match users {
+                Some(v) => v,
+                None => {
+                    return CreateInteractionResponseMessage::new().content("You are not linked to a minecraft account")
+                }
+            };
+
+            let msg = sanitize_message(&options.get(0).unwrap().value.string());
+            match uuid_to_username(uuid).await {
+                Ok(v) => {
+                    let _ = state.tx.send(InternalMessages::IrcCreate {
+                        sender: uuid,
+                        message: msg.clone(),
+                        date: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis(),
+                    });
+                    CreateInteractionResponseMessage::new().ephemeral(true).content("Send!")
+                }
+                Err(_) => CreateInteractionResponseMessage::new().content("Failed to get username"),
             }
         }
-        _ => unreachable!(),
+
+        _ => CreateInteractionResponseMessage::new().content("Invalid subcommand".to_string()),
     }
 }
 
@@ -75,6 +109,21 @@ impl<'a> PanicOrFuckingWork for ResolvedValue<'a> {
 pub fn register() -> CreateCommand {
     CreateCommand::new("irc")
         .description("Change the permissions of the user")
+        .add_option(
+            CreateCommandOption::new(
+                CommandOptionType::SubCommand,
+                "send",
+                "Send a message to the irc channel",
+            )
+            .add_sub_option(
+                CreateCommandOption::new(
+                    CommandOptionType::String,
+                    "message",
+                    "Message to send to the irc channel",
+                )
+                .required(true),
+            ),
+        )
         .add_option(
             CreateCommandOption::new(
                 CommandOptionType::SubCommand,

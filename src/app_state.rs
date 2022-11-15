@@ -2,6 +2,7 @@ use std::{collections::HashMap, sync::atomic::AtomicU16};
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
+use serenity::model::prelude::UserId;
 use tokio::sync::broadcast;
 use uuid::Uuid;
 
@@ -35,7 +36,7 @@ pub struct User {
     #[serde(default, skip)]
     pub connected: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub linked_discord: Option<u64>,
+    pub linked_discord: Option<UserId>,
     #[serde(default, skip_serializing_if = "is_false")]
     pub irc_blacklisted: bool,
 }

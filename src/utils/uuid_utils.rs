@@ -28,3 +28,25 @@ pub async fn username_to_uuid(username: String) -> Result<UuidAndUsername> {
     )?;
     Ok(result)
 }
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct SlothUser {
+    pub uuid: Uuid,
+    pub links: Links,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct Links {
+    #[serde(rename = "DISCORD")]
+    pub discord: String,
+}
+
+pub async fn username_to_uuid_and_discord(username: &str) -> Result<SlothUser> {
+    let result = serde_json::from_slice(
+        &reqwest::get(&format!("https://api.slothpixel.me/api/players/{username}"))
+            .await?
+            .bytes()
+            .await?,
+    )?;
+    Ok(result)
+}
