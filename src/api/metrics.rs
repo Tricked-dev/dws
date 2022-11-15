@@ -7,15 +7,14 @@ use crate::app_state::AppState;
 
 pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let mut metrics = String::new();
-    metrics.push_str(&prometheus_stat(
-        "Connected users",
-        "connected_users",
-        &format!("{}", &state.user_set.lock().len()),
-    ));
+    let users = state.users.lock();
+    let connected_users = users.iter().filter(|x| x.1.connected).count();
+    let blacklisted_users = users.iter().filter(|x| x.1.irc_blacklisted).count();
+    metrics.push_str(&prometheus_stat("Connected users", "connected_users", connected_users));
     metrics.push_str(&prometheus_stat(
         "Blocked users",
         "blocked_irc_users",
-        &format!("{}", &state.irc_blacklist.lock().len()),
+        &format!("{}", blacklisted_users),
     ));
     metrics.push_str(&prometheus_stat(
         "Cosmetics count",
@@ -30,8 +29,9 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     metrics.push_str(&prometheus_stat(
         "Messages per second",
         "messages_per_second",
-        &format!("{}", &state.messages_sec.load(std::sync::atomic::Ordering::Relaxed)),
+        state.messages_sec.load(std::sync::atomic::Ordering::Relaxed),
     ));
+    #[cfg(target_os = "linux")]
     add_process_stats(&mut metrics);
     metrics
 }
@@ -43,6 +43,7 @@ where
     format!("# HELP {name} {help}\n{name} {value}\n\n")
 }
 
+#[allow(unused_variables)]
 pub fn add_process_stats(r: &mut String) {
     let me = procfs::process::Process::myself().unwrap();
     let me_stat = me.stat().unwrap();
@@ -65,8 +66,6 @@ pub fn add_process_stats(r: &mut String) {
         "process_threads",
         me_stat.num_threads,
     ));
-
-    // process_max_fds
 
     if let Ok(max) = me.limits() {
         if let LimitValue::Value(v) = max.max_open_files.hard_limit {

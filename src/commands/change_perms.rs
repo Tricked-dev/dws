@@ -35,6 +35,7 @@ pub fn run(cmd: CommandInteraction, state: Arc<AppState>) -> CreateInteractionRe
         None => User {
             flags: bits,
             enabled_prefix: None,
+            ..Default::default()
         },
     };
 

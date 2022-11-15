@@ -12,6 +12,7 @@ use crate::{
 mod change_perms;
 mod irc;
 mod users;
+mod link;
 
 pub static REST: Lazy<Http> = Lazy::new(|| {
     let http = Http::new(&DISCORD_TOKEN);

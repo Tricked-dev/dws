@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    sync::{atomic::AtomicU16, Arc},
-};
+use std::{collections::HashMap, sync::atomic::AtomicU16};
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -11,13 +8,11 @@ use uuid::Uuid;
 use crate::{bitflags::CosmeticFlags, messages::InternalMessages};
 
 pub struct AppState {
-    pub user_set: Mutex<HashSet<Uuid>>,
     pub tx: broadcast::Sender<InternalMessages>,
     pub broadcast_secret: String,
     pub users: Mutex<HashMap<Uuid, User>>,
     pub cosmetics: Mutex<Vec<Cosmetic>>,
-    pub messages_sec: Arc<AtomicU16>,
-    pub irc_blacklist: Mutex<HashSet<Uuid>>,
+    pub messages_sec: AtomicU16,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,6 +28,18 @@ pub struct Cosmetic {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct User {
+    #[serde(default, skip_serializing_if = "CosmeticFlags::is_empty")]
     pub flags: CosmeticFlags,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enabled_prefix: Option<u8>,
+    #[serde(default, skip)]
+    pub connected: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub linked_discord: Option<u64>,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub irc_blacklisted: bool,
+}
+
+fn is_false(b: &bool) -> bool {
+    !b
 }

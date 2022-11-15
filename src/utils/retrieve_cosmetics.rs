@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -14,8 +14,6 @@ pub struct CosmeticFile {
     pub cosmetics: Vec<Cosmetic>,
     #[serde(default)]
     pub users: HashMap<Uuid, User>,
-    #[serde(default)]
-    pub irc_blacklist: HashSet<Uuid>,
 }
 
 pub async fn retrieve_cosmetics() -> CosmeticFile {

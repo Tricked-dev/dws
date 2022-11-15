@@ -6,7 +6,7 @@ use serenity::{
 };
 use uuid::Uuid;
 
-use crate::app_state::AppState;
+use crate::app_state::{AppState, User};
 
 pub async fn run(cmd: CommandInteraction, state: Arc<AppState>) -> CreateInteractionResponseMessage {
     let options = cmd.data.options();
@@ -14,8 +14,8 @@ pub async fn run(cmd: CommandInteraction, state: Arc<AppState>) -> CreateInterac
     match sub.name {
         "list" => {
             let mut res = "Blacklisted uuids\n----------------\n".to_owned();
-            for uuid in state.irc_blacklist.lock().iter() {
-                res.push_str(&format!("{}\n", uuid));
+            for uuid in state.users.lock().iter().filter(|x| x.1.irc_blacklisted) {
+                res.push_str(&format!("{}\n", uuid.0));
             }
             CreateInteractionResponseMessage::new().content(res)
         }
@@ -28,11 +28,22 @@ pub async fn run(cmd: CommandInteraction, state: Arc<AppState>) -> CreateInterac
                     Ok(v) => v,
                     Err(_) => return CreateInteractionResponseMessage::new().content("Invalid UUID".to_string()),
                 };
-                if add {
-                    state.irc_blacklist.lock().insert(uuid);
-                } else {
-                    state.irc_blacklist.lock().remove(&uuid);
-                }
+                let mut users = state.users.lock();
+
+                match users.get(&uuid) {
+                    Some(v) => {
+                        let mut user = v.clone();
+                        user.irc_blacklisted = add;
+                        users.insert(uuid, user);
+                    }
+                    None => {
+                        let user = User {
+                            irc_blacklisted: add,
+                            ..Default::default()
+                        };
+                        users.insert(uuid, user);
+                    }
+                };
 
                 CreateInteractionResponseMessage::new().content(format!(
                     "{} {} {} the blacklist",

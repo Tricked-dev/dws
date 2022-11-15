@@ -261,7 +261,13 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
                     });
                 }
                 Some(Messages::IrcCreate { message }) => {
-                    if state.irc_blacklist.lock().contains(&uuid) {
+                    let blacklisted = state
+                        .users
+                        .lock()
+                        .get(&uuid)
+                        .map(|u| u.irc_blacklisted)
+                        .unwrap_or_default();
+                    if blacklisted {
                         continue;
                     }
 
@@ -287,8 +293,15 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
         _ = (&mut recv_task) => send_task.abort(),
     };
 
-    tracing::debug!("{} disconnected from the website", uuid,);
-    state.user_set.lock().remove(&uuid);
-    tracing::info!("TOTAL: {}", state.user_set.lock().len());
+    tracing::debug!("{} disconnected from the website", uuid);
+    let mut users = state.users.lock();
+    let user = users.get(&uuid);
+    let mut user = match user {
+        Some(user) => user.clone(),
+        None => return Ok(()),
+    };
+    user.connected = false;
+    users.insert(uuid, user);
+    tracing::info!("TOTAL: {}", users.iter().filter(|(_, u)| u.connected).count());
     Ok(())
 }

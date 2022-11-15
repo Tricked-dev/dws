@@ -1,9 +1,6 @@
 #![allow(clippy::single_match)]
 
-use std::{
-    collections::HashSet,
-    sync::{atomic::AtomicU16, Arc},
-};
+use std::sync::{atomic::AtomicU16, Arc};
 
 use axum::{
     routing::{get, post},
@@ -47,19 +44,16 @@ async fn main() -> Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
     register().await?;
-    let user_set = Mutex::new(HashSet::new());
     let (tx, mut rx) = tokio_broadcast::channel::<InternalMessages>(100);
 
     let cosmetics = retrieve_cosmetics().await;
 
     let app_state = Arc::new(AppState {
-        user_set,
         tx: tx.clone(),
         broadcast_secret: BROADCAST_SECRET.to_string(),
         cosmetics: Mutex::new(cosmetics.cosmetics),
         users: Mutex::new(cosmetics.users),
-        irc_blacklist: Mutex::new(cosmetics.irc_blacklist),
-        messages_sec: Arc::new(AtomicU16::new(0)),
+        messages_sec: AtomicU16::new(0),
     });
 
     set_ctrlc(app_state.clone())?;
@@ -74,7 +68,6 @@ async fn main() -> Result<()> {
             let file = CosmeticFile {
                 cosmetics: app_state_clone.cosmetics.lock().clone(),
                 users: app_state_clone.users.lock().clone(),
-                irc_blacklist: app_state_clone.irc_blacklist.lock().clone(),
             };
             tokio::fs::write(COSMETICS_FILE.as_str(), serde_json::to_string_pretty(&file).unwrap())
                 .await
@@ -100,8 +93,13 @@ async fn main() -> Result<()> {
                     requester_id,
                     nonce,
                 } => {
-                    let user_set = app_state.user_set.lock();
-                    let is_online = user_set.contains(&user_id);
+                    let is_online = app_state
+                        .users
+                        .lock()
+                        .get(&user_id)
+                        .map(|x| x.connected)
+                        .unwrap_or_default();
+
                     let msg = InternalMessages::UserRequestResponse {
                         is_online,
                         requester_id,
@@ -133,11 +131,11 @@ async fn main() -> Result<()> {
                     requester_id,
                     nonce,
                 } => {
-                    let user_set = app_state.user_set.lock();
+                    let users = app_state.users.lock();
                     let list = user_ids
                         .into_iter()
                         .map(|user_id| {
-                            let is_online = user_set.contains(&user_id);
+                            let is_online = users.get(&user_id).map(|x| x.connected).unwrap_or_default();
                             (user_id, is_online)
                         })
                         .collect();
