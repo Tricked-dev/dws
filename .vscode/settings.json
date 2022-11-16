@@ -6,7 +6,9 @@
     "~/.cargo/git/checkouts/serenity*"
   ],
   "git.autoRepositoryDetection": "subFolders",
+  "deno.lint": false,
   "deno.enablePaths": [
-    "wstest.ts"
+    "wstest.ts",
+    "test.ts"
   ]
 }

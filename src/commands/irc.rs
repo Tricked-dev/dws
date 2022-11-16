@@ -12,7 +12,7 @@ use uuid::Uuid;
 use crate::{
     app_state::{AppState, User},
     messages::InternalMessages,
-    utils::{sanitize::sanitize_message, uuid_to_username},
+    utils::sanitize::sanitize_message,
 };
 
 pub async fn run(cmd: CommandInteraction, state: Arc<AppState>, admin: bool) -> CreateInteractionResponseMessage {
@@ -76,17 +76,12 @@ pub async fn run(cmd: CommandInteraction, state: Arc<AppState>, admin: bool) -> 
             };
 
             let msg = sanitize_message(&options.get(0).unwrap().value.string());
-            match uuid_to_username(uuid).await {
-                Ok(v) => {
-                    let _ = state.tx.send(InternalMessages::IrcCreate {
-                        sender: uuid,
-                        message: msg.clone(),
-                        date: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis(),
-                    });
-                    CreateInteractionResponseMessage::new().ephemeral(true).content("Send!")
-                }
-                Err(_) => CreateInteractionResponseMessage::new().content("Failed to get username"),
-            }
+            let _ = state.tx.send(InternalMessages::IrcCreate {
+                sender: uuid,
+                message: msg.clone(),
+                date: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis(),
+            });
+            CreateInteractionResponseMessage::new().ephemeral(true).content("Send!")
         }
 
         _ => CreateInteractionResponseMessage::new().content("Invalid subcommand".to_string()),
