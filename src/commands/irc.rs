@@ -66,7 +66,7 @@ pub async fn run(cmd: CommandInteraction, state: Arc<AppState>, admin: bool) -> 
                 .lock()
                 .iter()
                 .find(|x| x.1.linked_discord == Some(cmd.user.id))
-                .map(|x| x.0.clone());
+                .map(|x| *x.0);
 
             let uuid = match users {
                 Some(v) => v,
@@ -78,7 +78,7 @@ pub async fn run(cmd: CommandInteraction, state: Arc<AppState>, admin: bool) -> 
             let msg = sanitize_message(&options.get(0).unwrap().value.string());
             let _ = state.tx.send(InternalMessages::IrcCreate {
                 sender: uuid,
-                message: msg.clone(),
+                message: msg,
                 date: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis(),
             });
             CreateInteractionResponseMessage::new().ephemeral(true).content("Send!")

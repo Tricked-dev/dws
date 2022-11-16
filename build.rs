@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     zip.add_directory_from_path(name, options)?;
                 }
             }
-            let extra_source_files = vec!["Cargo.toml", "Cargo.lock", "README.md", "build.rs"];
+            let extra_source_files = vec!["Cargo.toml", "Cargo.lock", "README.md", "build.rs", "LICENSE"];
             for file in extra_source_files {
                 let path = Path::new(file);
                 let name = path.strip_prefix(Path::new(prefix)).unwrap();

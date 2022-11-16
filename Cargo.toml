@@ -4,6 +4,7 @@ license = "MPL-2.0"
 name = "dws"
 version = "0.1.0"
 repository = "https://github.com/dg-continuum/dws"
+description = "The first fully opensource Skyblock mod backend lol."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [profile.release]
