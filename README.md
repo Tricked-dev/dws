@@ -1,6 +1,26 @@
-## Api docs
+# DWS <!-- omit in toc -->
 
-[./asyncapi.md](./asyncapi.md)
+The first fully opensource Skyblock mod backend lol.
+
+- [Running](#running)
+- [Features](#features)
+- [Rest](#rest)
+  - [GET `/cosmetics`](#get-cosmetics)
+  - [POST `/broadcast`](#post-broadcast)
+  - [GET `/metrics`](#get-metrics)
+- [Websockets](#websockets)
+  - [Connecting](#connecting)
+  - [Requesting user status](#requesting-user-status)
+  - [Requesting user status bulk](#requesting-user-status-bulk)
+  - [Pings](#pings)
+  - [Update cosmetic](#update-cosmetic)
+  - [Cosmetic Ack event](#cosmetic-ack-event)
+  - [Irc](#irc)
+  - [Broadcasts](#broadcasts)
+  - [Errors](#errors)
+- [Cosmetics](#cosmetics)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Running
 
@@ -21,6 +41,7 @@ cargo run --release
 - [x] Checking if players are online
 - [x] Irc
 - [x] Prometheus metrics
+- [x] Discord linking
 
 ## Rest
 
@@ -306,3 +327,11 @@ A cosmetics file looks something like this, The ran instance uses type 1 to iden
   }
 }
 ```
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. To test out the websocket server you can use either insomnia or the provided `test.ts` tool with [Deno](https://deno.land/), The tool automatically picks up the requests from the README file.
+
+## License
+
+We use the Mozilla Public License 2.0. MPL tries to find a balance between permissive (MIT, Apache, Zlib) and copyleft licenses (GPL, LGPL). <sup><sup>[MORE INFO](https://www.mozilla.org/en-US/MPL/2.0/FAQ/)</sup></sup>
