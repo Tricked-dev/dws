@@ -1,6 +1,9 @@
 #![allow(clippy::single_match)]
 
-use std::sync::{atomic::AtomicU16, Arc};
+use std::{
+    env,
+    sync::{atomic::AtomicU16, Arc},
+};
 
 use axum::{
     routing::{get, post},
@@ -34,9 +37,13 @@ pub mod messages;
 pub mod utils;
 
 mod api;
+mod source;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    if env::var("WRITE_SOURCES").is_ok() {
+        source::write_sources();
+    }
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG").unwrap_or_else(|_| "dws=debug,tower_http=debug".into()),

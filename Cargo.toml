@@ -52,3 +52,7 @@ tower = { version = "0.4", features = [] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.2.1", features = ["v4", "serde"] }
+
+[build-dependencies]
+zip = { version = "0.6.3", default-features = false }
+walkdir = "2.3.2"
