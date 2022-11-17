@@ -87,6 +87,7 @@ async fn main() -> Result<()> {
         .route("/metrics", get(metrics::metrics))
         .route("/broadcast", post(broadcast::broadcast))
         .route("/cosmetics", get(cosmetics::cosmetics))
+        .route("/cosmetics", post(cosmetics::force_update))
         .route("/discord", post(discord::handle_request))
         .route("/ws", get(ws::ws_handler));
 
