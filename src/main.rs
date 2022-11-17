@@ -10,6 +10,7 @@ use axum::{
     Router,
 };
 use futures_util::future::join;
+use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 use serenity::builder::CreateMessage;
 use tokio::sync::broadcast as tokio_broadcast;
@@ -19,7 +20,7 @@ use crate::{
     api::*,
     app_state::AppState,
     commands::{register, REST},
-    config::{BROADCAST_SECRET, COSMETICS_FILE, DISCORD_IRC_CHANNEL, HOST, PORT},
+    config::CONFIG,
     error::Result,
     messages::InternalMessages,
     utils::{
@@ -30,6 +31,7 @@ use crate::{
 
 pub mod app_state;
 pub mod bitflags;
+pub mod cli;
 pub mod commands;
 pub mod config;
 pub mod error;
@@ -44,6 +46,8 @@ async fn main() -> Result<()> {
     if env::var("WRITE_SOURCES").is_ok() {
         source::write_sources();
     }
+    /* Initlized the CONFIG */
+    Lazy::force(&CONFIG);
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG").unwrap_or_else(|_| "dws=debug,tower_http=debug".into()),
@@ -57,7 +61,7 @@ async fn main() -> Result<()> {
 
     let app_state = Arc::new(AppState {
         tx: tx.clone(),
-        broadcast_secret: BROADCAST_SECRET.to_string(),
+        broadcast_secret: CONFIG.api_secret.clone(),
         cosmetics: Mutex::new(cosmetics.cosmetics),
         users: Mutex::new(cosmetics.users),
         messages_sec: AtomicU16::new(0),
@@ -76,7 +80,7 @@ async fn main() -> Result<()> {
                 cosmetics: app_state_clone.cosmetics.lock().clone(),
                 users: app_state_clone.users.lock().clone(),
             };
-            tokio::fs::write(COSMETICS_FILE.as_str(), serde_json::to_string_pretty(&file).unwrap())
+            tokio::fs::write(&CONFIG.cosmetics_file, serde_json::to_string_pretty(&file).unwrap())
                 .await
                 .expect("Failed to write cosmetics file");
         }
@@ -91,7 +95,9 @@ async fn main() -> Result<()> {
         .route("/discord", post(discord::handle_request))
         .route("/ws", get(ws::ws_handler));
 
-    let addr = format!("{host}:{port}", host = *HOST, port = *PORT).parse().unwrap();
+    let addr = format!("{host}:{port}", host = CONFIG.host, port = CONFIG.port)
+        .parse()
+        .unwrap();
     tracing::debug!("listening on {}", addr);
     let (r, _) = join(axum::Server::bind(&addr).serve(app.into_make_service()), async {
         while let Ok(msg) = rx.recv().await {
@@ -120,7 +126,7 @@ async fn main() -> Result<()> {
                     message,
                     sender,
                     date: _,
-                } => match *DISCORD_IRC_CHANNEL {
+                } => match CONFIG.discord_irc_channel {
                     Some(channel) => {
                         let username = if let Ok(r) = uuid_to_username(sender).await {
                             r.name

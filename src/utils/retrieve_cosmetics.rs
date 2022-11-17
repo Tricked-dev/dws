@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::{
     app_state::{Cosmetic, User},
-    config::COSMETICS_FILE,
+    config::CONFIG,
 };
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
@@ -17,7 +17,7 @@ pub struct CosmeticFile {
 }
 
 pub async fn retrieve_cosmetics() -> CosmeticFile {
-    if let Ok(file) = &tokio::fs::read_to_string(&*COSMETICS_FILE).await {
+    if let Ok(file) = &tokio::fs::read_to_string(&CONFIG.cosmetics_file).await {
         serde_json::from_str(file).expect("Failed to parse cosmetics.json")
     } else {
         CosmeticFile::default()

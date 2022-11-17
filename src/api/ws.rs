@@ -17,7 +17,7 @@ use uuid::Uuid;
 
 use crate::{
     app_state::AppState,
-    config::RATELIMIT_PER_MINUTE,
+    config::CONFIG,
     messages::{parse_ws_message, to_ws_message, InternalMessages, Messages},
     utils::{sanitize::sanitize_message, validate_session},
     Result,
@@ -36,7 +36,7 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     let (mut sender, mut receiver) = stream.split();
     let mut uuid: Option<Uuid> = None;
     let mut name: Option<String> = None;
-    let lim = RateLimiter::direct(*RATELIMIT_PER_MINUTE);
+    let lim = RateLimiter::direct(CONFIG.ratelimit_per_minute);
     let irclim =
         RateLimiter::direct(Quota::per_minute(NonZeroU32::new(4).unwrap()).allow_burst(NonZeroU32::new(8).unwrap()));
 
