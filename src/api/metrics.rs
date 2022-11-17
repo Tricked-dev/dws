@@ -48,9 +48,9 @@ pub fn add_process_stats(r: &mut String) {
     let me = procfs::process::Process::myself().unwrap();
     let me_stat = me.stat().unwrap();
     let tps = procfs::ticks_per_second().unwrap();
+
     // im entirely unsure what that this is even accurate info.
     // this was all written by copilot
-
     r.push_str(&prometheus_stat(
         "Total user and system CPU time spent in seconds.",
         "process_cpu_seconds_total",
