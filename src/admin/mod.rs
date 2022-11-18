@@ -1,9 +1,11 @@
-use std::{fmt::Display, sync::Arc};
+use std::sync::Arc;
 
 use axum::{extract::State, response::Html};
 use dioxus::{prelude::*, ssr::render_lazy};
 
 use crate::app_state::AppState;
+
+pub mod users;
 
 pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
     let users = state.users.lock();
@@ -49,6 +51,7 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                     ]
                 }
 
+
             }
         body {
             div {
@@ -72,16 +75,32 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                         }
                     })
                     form {
-                        action: "/admin/force_update",
-                        method: "POST",
+                        id: "add-user",
                         input {
-                            r#type: "hidden",
-                            name: "broadcast_secret",
-                            value: ""
+                            name: "uuid",
+                            placeholder: "uuid",
+                            required: "true"
                         }
+                        input {
+                            name: "linked_discord",
+                            placeholder: "linked_discord"
+                        }
+                        input {
+                            name: "enabled_prefix",
+                            placeholder: "enabled_prefix"
+                        }
+                        input {
+                            name: "irc_blacklisted",
+                            placeholder: "irc_blacklisted"
+                        }
+                        input {
+                            name: "flags",
+                            placeholder: "flags"
+                        }
+
                         button {
                             r#type: "submit",
-                            "Force update"
+                            "Add user"
                         }
                     }
                 }
@@ -103,6 +122,30 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                     })
                 }
             }
+            script {
+                    defer: "true",
+                   vec![ r##"
+                    const form = document.getElementById("add-user");
+                   form.addEventListener('submit',async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const data = JSON.stringify(Object.fromEntries([...new FormData(form).entries()].filter(x=>x[1] != "")));
+                        let res = await fetch("/users", {
+                            method: "POST",
+                            body: data,
+                            headers: {
+                                "Content-Type": "application/json"
+                            }
+                        })
+                        if(res.status == 200) {
+                            alert("User added");
+                            window.location.reload();
+                        } else {
+                            alert(`Error adding user: ${await res.text()}`);
+                        }
+                    });
+                "##]
+                }
           }
     }))
 }

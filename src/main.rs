@@ -6,10 +6,10 @@ use std::{
 };
 
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
-use futures_util::future::join;
+use futures_util::future::join3;
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 use serenity::builder::CreateMessage;
@@ -19,7 +19,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::{
     api::*,
     app_state::AppState,
-    commands::{register, REST},
+    commands::REST,
     config::CONFIG,
     error::Result,
     messages::InternalMessages,
@@ -97,78 +97,90 @@ async fn main() -> Result<()> {
         .route("/ws", get(ws::ws_handler))
         .route("/admin", get(admin::load_admin));
 
-    let admin = Router::with_state(app_state.clone()).route("/", get(admin::load_admin));
+    let admin = Router::with_state(app_state.clone())
+        .route("/", get(admin::load_admin))
+        .route("/users", post(admin::users::add_user))
+        .route("/users", delete(admin::users::remove_user));
 
     let addr = format!("{host}:{port}", host = CONFIG.host, port = CONFIG.port)
         .parse()
         .unwrap();
-    tracing::debug!("listening on {}", addr);
-    let (r, _) = join(axum::Server::bind(&addr).serve(app.into_make_service()), async {
-        while let Ok(msg) = rx.recv().await {
-            match msg {
-                InternalMessages::RequestUser {
-                    user_id,
-                    requester_id,
-                    nonce,
-                } => {
-                    let is_online = app_state
-                        .users
-                        .lock()
-                        .get(&user_id)
-                        .map(|x| x.connected)
-                        .unwrap_or_default();
-
-                    let msg = InternalMessages::UserRequestResponse {
-                        is_online,
-                        requester_id,
+    let admin_addr = format!("{host}:{port}", host = CONFIG.host, port = CONFIG.port + 1)
+        .parse()
+        .unwrap();
+    tracing::debug!("listening on http://{}", addr);
+    tracing::debug!("admin listening on http://{}", admin_addr);
+    let (r, r2, _) = join3(
+        axum::Server::bind(&addr).serve(app.into_make_service()),
+        axum::Server::bind(&admin_addr).serve(admin.into_make_service()),
+        async {
+            while let Ok(msg) = rx.recv().await {
+                match msg {
+                    InternalMessages::RequestUser {
                         user_id,
-                        nonce,
-                    };
-                    let _ = tx.send(msg);
-                }
-                InternalMessages::IrcCreate {
-                    message,
-                    sender,
-                    date: _,
-                } => match CONFIG.discord_irc_channel {
-                    Some(channel) => {
-                        let username = if let Ok(r) = uuid_to_username(sender).await {
-                            r.name
-                        } else {
-                            continue;
-                        };
-                        channel
-                            .send_message(&*REST, CreateMessage::new().content(format!("{username}: {}", message)))
-                            .await
-                            .unwrap();
-                    }
-                    None => {}
-                },
-                InternalMessages::RequestUsersBulk {
-                    user_ids,
-                    requester_id,
-                    nonce,
-                } => {
-                    let users = app_state.users.lock();
-                    let list = user_ids
-                        .into_iter()
-                        .map(|user_id| {
-                            let is_online = users.get(&user_id).map(|x| x.connected).unwrap_or_default();
-                            (user_id, is_online)
-                        })
-                        .collect();
-                    let msg = InternalMessages::UserRequestBulkResponse {
-                        users: list,
                         requester_id,
                         nonce,
-                    };
-                    let _ = tx.send(msg);
+                    } => {
+                        let is_online = app_state
+                            .users
+                            .lock()
+                            .get(&user_id)
+                            .map(|x| x.connected)
+                            .unwrap_or_default();
+
+                        let msg = InternalMessages::UserRequestResponse {
+                            is_online,
+                            requester_id,
+                            user_id,
+                            nonce,
+                        };
+                        let _ = tx.send(msg);
+                    }
+                    InternalMessages::IrcCreate {
+                        message,
+                        sender,
+                        date: _,
+                    } => match CONFIG.discord_irc_channel {
+                        Some(channel) => {
+                            let username = if let Ok(r) = uuid_to_username(sender).await {
+                                r.name
+                            } else {
+                                continue;
+                            };
+                            channel
+                                .send_message(&*REST, CreateMessage::new().content(format!("{username}: {}", message)))
+                                .await
+                                .unwrap();
+                        }
+                        None => {}
+                    },
+                    InternalMessages::RequestUsersBulk {
+                        user_ids,
+                        requester_id,
+                        nonce,
+                    } => {
+                        let users = app_state.users.lock();
+                        let list = user_ids
+                            .into_iter()
+                            .map(|user_id| {
+                                let is_online = users.get(&user_id).map(|x| x.connected).unwrap_or_default();
+                                (user_id, is_online)
+                            })
+                            .collect();
+                        let msg = InternalMessages::UserRequestBulkResponse {
+                            users: list,
+                            requester_id,
+                            nonce,
+                        };
+                        let _ = tx.send(msg);
+                    }
+                    _ => {}
                 }
-                _ => {}
             }
-        }
-    })
+        },
+    )
     .await;
     r?;
+    r2?;
     Ok(())
 }
