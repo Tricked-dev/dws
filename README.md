@@ -8,6 +8,10 @@ The first fully opensource Skyblock mod backend lol.
   - [GET `/cosmetics`](#get-cosmetics)
   - [POST `/broadcast`](#post-broadcast)
   - [GET `/metrics`](#get-metrics)
+  - [DELETE `/users?uuid=$uuid`](#delete-usersuuiduuid)
+  - [POST `/users`](#post-users)
+  - [DELETE `/cosmetics?id=$id`](#delete-cosmeticsidid)
+  - [POST `/cosmetics`](#post-cosmetics)
 - [Websockets](#websockets)
   - [Connecting](#connecting)
   - [Requesting user status](#requesting-user-status)
@@ -19,6 +23,7 @@ The first fully opensource Skyblock mod backend lol.
   - [Broadcasts](#broadcasts)
   - [Errors](#errors)
 - [Cosmetics](#cosmetics)
+- [Dashboard](#dashboard)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -104,6 +109,30 @@ Ok
 ### GET `/metrics`
 
 Returns a bunch of prometheus metrics
+
+### DELETE `/users?uuid=$uuid`
+
+> info this is a dashboard endpoint
+
+Deletes a user from the database
+
+### POST `/users`
+
+> info this is a dashboard endpoint
+
+Create & Edit a user, payload: <https://github.com/dg-continuum/dws/blob/master/src/admin/users.rs#L13-L20>
+
+### DELETE `/cosmetics?id=$id`
+
+> info this is a dashboard endpoint
+
+Deletes a cosmetic from the database
+
+### POST `/cosmetics`
+
+> info this is a dashboard endpoint
+
+Creates a cosmetic, payload: <https://github.com/dg-continuum/dws/blob/master/src/admin/cosmetics.rs#L11-L20>
 
 ## Websockets
 
@@ -341,13 +370,12 @@ A cosmetics file looks something like this, The ran instance uses type 1 to iden
 }
 ```
 
-## Dashboord
+## Dashboard
 
 DWS has a simple dashboard that is enabled by default and on the next port the websocket/api is running this dashboard can be disabled by setting the `ADMIN_DASH` var to false, It is not secured you are supposed to secure it with nginx or cloudflare zero trust.
 The dashboard also exposes 4 api endpoints for creating/modifying users, deleting them, and adding cosmetics and deleting those.
 
 ![image](https://user-images.githubusercontent.com/72335827/202806169-e0c40c2a-ed1b-4798-94b0-963fcc742fef.png)
-
 
 ## Contributing
 
