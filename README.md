@@ -42,6 +42,7 @@ cargo run --release
 - [x] Irc
 - [x] Prometheus metrics
 - [x] Discord linking
+- [x] Admin dashboard
 
 ## Rest
 
@@ -109,7 +110,8 @@ Returns a bunch of prometheus metrics
 See the insomnia example for more detailed info,
 Nonces are a optional field
 
-### Connecting 
+### Connecting
+
 <!-- TEST_MODE -->
 
 for development none of this validated. server_id is expected to be a hashed server id that is needed for <https://wiki.vg/Protocol_Encryption#Authentication>
@@ -133,7 +135,8 @@ for development none of this validated. server_id is expected to be a hashed ser
 }
 ```
 
-### Requesting user status 
+### Requesting user status
+
 <!-- TEST_MODE -->
 
 ```json
@@ -156,7 +159,8 @@ for development none of this validated. server_id is expected to be a hashed ser
 }
 ```
 
-### Requesting user status bulk 
+### Requesting user status bulk
+
 <!-- TEST_MODE -->
 
 ```json
@@ -180,7 +184,8 @@ for development none of this validated. server_id is expected to be a hashed ser
 }
 ```
 
-### Pings 
+### Pings
+
 <!-- TEST_MODE -->
 
 ```json
@@ -197,7 +202,8 @@ for development none of this validated. server_id is expected to be a hashed ser
 }
 ```
 
-### Update cosmetic 
+### Update cosmetic
+
 <!-- TEST_MODE -->
 
 ```json
@@ -222,7 +228,7 @@ for development none of this validated. server_id is expected to be a hashed ser
 }
 ```
 
-### Cosmetic Ack event 
+### Cosmetic Ack event
 
 It is suggested to update cosmetics between 1-5 minutes after this event is received to account for any other updates and to not trigger ddos protection.
 
@@ -234,7 +240,8 @@ It is suggested to update cosmetics between 1-5 minutes after this event is rece
 }
 ```
 
-### Irc 
+### Irc
+
 <!-- TEST_MODE -->
 
 The irc chat can be linked to discord and you can blacklist uuids from the irc using `/irc blacklist Add <uuid>`, if a user is blacklisted irc messages send by this user will be silently ignored.
@@ -274,7 +281,7 @@ Broadcasts are only received not send you can view the broadcast post request to
 }
 ```
 
-### Errors 
+### Errors
 
 Errors are only recieved and look like this, errors can include a nonce for when necessary
 

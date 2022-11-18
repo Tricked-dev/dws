@@ -16,6 +16,9 @@ pub struct Cli {
     /// API secret
     #[arg(env, long, default_value = "secret")]
     pub api_secret: String,
+    /// Admin dash enabled
+    #[arg(env, long, default_value = "true")]
+    pub admin_dash: bool,
     /// Cosmetics file
     #[arg(env, long, default_value = "cosmetics.json")]
     pub cosmetics_file: String,

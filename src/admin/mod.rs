@@ -5,6 +5,7 @@ use dioxus::{prelude::*, ssr::render_lazy};
 
 use crate::app_state::AppState;
 
+pub mod cosmetics;
 pub mod users;
 
 pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
@@ -42,10 +43,12 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                             :root {
                                 color-scheme: dark;
                             }
-                            th {
+                            th:not(:first-child) {
                                 min-width: 100px;
                                 text-align: left;
                             }
+                            tr{background-color: #111111;}
+                            tr:nth-child(even){background-color: #262626}
 
                         "#
                     ]
@@ -59,6 +62,7 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                 h2 { "Users" }
                 table {
                     tr {
+                        th { "" }
                         th { "Username" }
                         th { "Cosmetic" }
                         th { "Connected" }
@@ -67,6 +71,9 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                     }
                     users.iter().map(|(uuid,data)| rsx!{
                         tr {
+                            td {
+                                button { class: "delete", value: "{uuid}", "X" }
+                            }
                             td { pre { "{uuid}" } }
                             td { pre { "{data.enabled_prefix:?}" } }
                             td { pre { "{data.connected}" } }
@@ -105,8 +112,46 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                     }
                 }
                 h2 { "Cosmetics" }
+                form {
+                    id: "add-cosmetic",
+                    input {
+                        name: "id",
+                        placeholder: "id",
+                        required: "true"
+                    }
+                    input {
+                        name: "name",
+                        placeholder: "name",
+                        required: "true"
+                    }
+                    input {
+                        name: "description",
+                        placeholder: "description",
+                        required: "true"
+                    }
+                    input {
+                        name: "data",
+                        placeholder: "data",
+                        required: "true"
+                    }
+                    input {
+                        name: "type",
+                        placeholder: "type",
+                        required: "true"
+                    }
+                    input {
+                        name: "required_flags",
+                        placeholder: "required_flags",
+                        required: "true"
+                    }
+                    button {
+                        r#type: "submit",
+                        "Add cosmetic"
+                    }
+                }
                 table {
                     tr {
+                        th { "" }
                         th { "Name" }
                         th { "Id" }
                         th { "Preview" }
@@ -114,6 +159,9 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                     }
                     cosmetics.iter().map(|cosmetic| rsx!{
                         tr {
+                            td {
+                                button { class: "cdelete", value: "{cosmetic.id}", "X" }
+                            }
                             td { pre { "{cosmetic.name}" } }
                             td { pre { "{cosmetic.id}" } }
                             td { pre { "{cosmetic.data}" } }
@@ -144,6 +192,58 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                             alert(`Error adding user: ${await res.text()}`);
                         }
                     });
+                    const elements = document.getElementsByClassName("delete");
+                    for(let i = 0; i < elements.length; i++) {
+                        elements[i].addEventListener("click", async (e) => {
+                            let res = await fetch(`/users?uuid=${e.target.value}`, {
+                                method: "DELETE"
+                            })
+                            if(res.status == 200) {
+                                alert("User deleted");
+                                window.location.reload();
+                            } else {
+                                alert(`Error deleting user: ${await res.text()}`);
+                            }
+                        })
+                    }
+                    const cform = document.getElementById("add-cosmetic");
+                    cform.addEventListener('submit',async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const d = Object.fromEntries([...new FormData(cform).entries()].filter(x=>x[1] != ""));
+                        d.id = parseInt(d.id);
+                        d.required_flags = parseInt(d.required_flags);
+                        d.type = parseInt(d.type);
+                        const data = JSON.stringify(d);
+                        let res = await fetch("/cosmetics", {
+                            method: "POST",
+                            body: data,
+                            headers: {
+                                "Content-Type": "application/json"
+                            }
+                        })
+                        if(res.status == 200) {
+                            alert("Cosmetic added");
+                            window.location.reload();
+                        } else {
+                            alert(`Error adding cosmetic: ${await res.text()}`);
+                        }
+                    });
+
+                    const celements = document.getElementsByClassName("cdelete");
+                    for(let i = 0; i < celements.length; i++) {
+                        celements[i].addEventListener("click", async (e) => {
+                            let res = await fetch(`/cosmetics?id=${e.target.value}`, {
+                                method: "DELETE"
+                            })
+                            if(res.status == 200) {
+                                alert("Cosmetic deleted");
+                                window.location.reload();
+                            } else {
+                                alert(`Error deleting cosmetic: ${await res.text()}`);
+                            }
+                        })
+                    }
                 "##]
                 }
           }

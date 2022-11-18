@@ -97,10 +97,16 @@ async fn main() -> Result<()> {
         .route("/ws", get(ws::ws_handler))
         .route("/admin", get(admin::load_admin));
 
-    let admin = Router::with_state(app_state.clone())
-        .route("/", get(admin::load_admin))
-        .route("/users", post(admin::users::add_user))
-        .route("/users", delete(admin::users::remove_user));
+    let admin = if CONFIG.admin_dash {
+        Router::with_state(app_state.clone())
+            .route("/", get(admin::load_admin))
+            .route("/users", post(admin::users::add_user))
+            .route("/users", delete(admin::users::remove_user))
+            .route("/cosmetics", post(admin::cosmetics::add_cosmetic))
+            .route("/cosmetics", delete(admin::cosmetics::remove_cosmetic))
+    } else {
+        Router::with_state(app_state.clone())
+    };
 
     let addr = format!("{host}:{port}", host = CONFIG.host, port = CONFIG.port)
         .parse()

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{Json, Multipart, State},
+    extract::{Json, Multipart, Query, State},
     response::Redirect,
 };
 use serde::Deserialize;
@@ -22,6 +22,11 @@ pub struct AddUser {
     pub flags: Option<CosmeticFlags>,
 }
 
+#[derive(Deserialize)]
+pub struct DeleteUser {
+    pub uuid: Uuid,
+}
+
 pub async fn add_user(State(state): State<Arc<AppState>>, Json(data): Json<AddUser>) -> &'static str {
     let mut users = state.users.lock();
     let def = users.get(&data.uuid).cloned().unwrap_or_default();
@@ -37,8 +42,8 @@ pub async fn add_user(State(state): State<Arc<AppState>>, Json(data): Json<AddUs
     );
     "ok"
 }
-pub async fn remove_user(State(state): State<Arc<AppState>>, Json(data): Json<Uuid>) -> Redirect {
+pub async fn remove_user(State(state): State<Arc<AppState>>, Query(data): Query<DeleteUser>) -> &'static str {
     let mut users = state.users.lock();
-    users.remove(&data);
-    Redirect::temporary("/")
+    users.remove(&data.uuid);
+    "ok"
 }
