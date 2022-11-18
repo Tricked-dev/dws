@@ -112,25 +112,29 @@ Returns a bunch of prometheus metrics
 
 ### DELETE `/users?uuid=$uuid`
 
-> info this is a dashboard endpoint
+> **info**
+> this is a dashboard endpoint
 
 Deletes a user from the database
 
 ### POST `/users`
 
-> info this is a dashboard endpoint
+> **info**
+> this is a dashboard endpoint
 
 Create & Edit a user, payload: <https://github.com/dg-continuum/dws/blob/master/src/admin/users.rs#L13-L20>
 
 ### DELETE `/cosmetics?id=$id`
 
-> info this is a dashboard endpoint
+> **info**
+> this is a dashboard endpoint
 
 Deletes a cosmetic from the database
 
 ### POST `/cosmetics`
 
-> info this is a dashboard endpoint
+> **info**
+> this is a dashboard endpoint
 
 Creates a cosmetic, payload: <https://github.com/dg-continuum/dws/blob/master/src/admin/cosmetics.rs#L11-L20>
 
