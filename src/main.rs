@@ -29,6 +29,7 @@ use crate::{
     },
 };
 
+pub mod admin;
 pub mod app_state;
 pub mod bitflags;
 pub mod cli;
@@ -54,7 +55,7 @@ async fn main() -> Result<()> {
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
-    register().await?;
+    // register().await?;
     let (tx, mut rx) = tokio_broadcast::channel::<InternalMessages>(100);
 
     let cosmetics = retrieve_cosmetics().await;
@@ -93,7 +94,10 @@ async fn main() -> Result<()> {
         .route("/cosmetics", get(cosmetics::cosmetics))
         .route("/cosmetics", post(cosmetics::force_update))
         .route("/discord", post(discord::handle_request))
-        .route("/ws", get(ws::ws_handler));
+        .route("/ws", get(ws::ws_handler))
+        .route("/admin", get(admin::load_admin));
+
+    let admin = Router::with_state(app_state.clone()).route("/", get(admin::load_admin));
 
     let addr = format!("{host}:{port}", host = CONFIG.host, port = CONFIG.port)
         .parse()
