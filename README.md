@@ -341,6 +341,14 @@ A cosmetics file looks something like this, The ran instance uses type 1 to iden
 }
 ```
 
+## Dashboord
+
+DWS has a simple dashboard that is enabled by default and on the next port the websocket/api is running this dashboard can be disabled by setting the `ADMIN_DASH` var to false, It is not secured you are supposed to secure it with nginx or cloudflare zero trust.
+The dashboard also exposes 4 api endpoints for creating/modifying users, deleting them, and adding cosmetics and deleting those.
+
+![image](https://user-images.githubusercontent.com/72335827/202806169-e0c40c2a-ed1b-4798-94b0-963fcc742fef.png)
+
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. To test out the websocket server you can use either insomnia or the provided `test.ts` tool with [Deno](https://deno.land/), The tool automatically picks up the requests from the README file.
