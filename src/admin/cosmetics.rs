@@ -1,15 +1,10 @@
 use std::sync::Arc;
 
-use axum::{
-    extract::{Json, Multipart, Query, State},
-    response::Redirect,
-};
+use axum::extract::{Json, Query, State};
 use serde::Deserialize;
-use serenity::model::prelude::UserId;
-use uuid::Uuid;
 
 use crate::{
-    app_state::{AppState, Cosmetic, User},
+    app_state::{AppState, Cosmetic},
     bitflags::CosmeticFlags,
 };
 
