@@ -13,9 +13,6 @@ pub struct Cli {
     /// Host to bind to 0.0.0.0 for public access
     #[arg(env, long, default_value = "127.0.0.1")]
     pub host: String,
-    /// API secret
-    #[arg(env, long, default_value = "secret")]
-    pub api_secret: String,
     /// Admin dash enabled
     #[arg(env, long, default_value = "true")]
     pub admin_dash: bool,

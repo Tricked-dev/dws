@@ -6,6 +6,8 @@ use serde::Deserialize;
 use crate::{
     app_state::{AppState, Cosmetic},
     bitflags::CosmeticFlags,
+    error::Result,
+    utils::retrieve_cosmetics::retrieve_cosmetics,
 };
 
 #[derive(Deserialize)]
@@ -47,4 +49,12 @@ pub async fn remove_cosmetic(State(state): State<Arc<AppState>>, Query(data): Qu
     let mut cosmetics = state.cosmetics.lock();
     cosmetics.retain(|c| c.id != data.id);
     "ok"
+}
+
+pub async fn force_update(State(state): State<Arc<AppState>>) -> Result<&'static str> {
+    println!("Updating cosmetics");
+    let cosmetics = retrieve_cosmetics().await;
+    state.cosmetics.lock().clone_from(&cosmetics.cosmetics);
+    state.users.lock().clone_from(&cosmetics.users);
+    Ok("Ok")
 }

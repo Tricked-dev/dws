@@ -14,10 +14,7 @@ use futures_util::future::join3;
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 use serenity::builder::CreateMessage;
-use tokio::{
-    sync::broadcast::{self as tokio_broadcast, Sender},
-    time::sleep,
-};
+use tokio::{sync::broadcast as tokio_broadcast, time::sleep};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
@@ -77,7 +74,6 @@ async fn main() -> Result<()> {
 
     let app_state = Arc::new(AppState {
         tx: tx.clone(),
-        broadcast_secret: CONFIG.api_secret.clone(),
         cosmetics: Mutex::new(cosmetics.cosmetics),
         users: Mutex::new(cosmetics.users),
         messages_sec: AtomicU16::new(0),
@@ -104,28 +100,6 @@ async fn main() -> Result<()> {
         }
     });
 
-    // build our application with some routes
-    let app = Router::with_state(app_state.clone())
-        .route("/metrics", get(metrics::metrics))
-        .route("/broadcast", post(broadcast::broadcast))
-        .route("/cosmetics", get(cosmetics::cosmetics))
-        .route("/cosmetics", post(cosmetics::force_update))
-        .route("/discord", post(discord::handle_request))
-        .route("/ws", get(ws::ws_handler));
-
-    let admin = if CONFIG.admin_dash {
-        Router::with_state(app_state.clone())
-            .route("/", get(admin::load_admin))
-            .route("/users", get(admin::users::get_users))
-            .route("/users", post(admin::users::add_user))
-            .route("/users", delete(admin::users::remove_user))
-            .route("/cosmetics", get(admin::cosmetics::get_cosmetics))
-            .route("/cosmetics", post(admin::cosmetics::add_cosmetic))
-            .route("/cosmetics", delete(admin::cosmetics::remove_cosmetic))
-    } else {
-        Router::with_state(app_state.clone())
-    };
-
     let addr = format!("{host}:{port}", host = CONFIG.host, port = CONFIG.port).parse()?;
     let admin_addr = format!(
         "{host}:{port}",
@@ -133,8 +107,32 @@ async fn main() -> Result<()> {
         port = CONFIG.admin_port.unwrap_or(CONFIG.port + 1)
     )
     .parse()?;
+
     tracing::debug!("listening on http://{}", addr);
-    tracing::debug!("admin listening on http://{}", admin_addr);
+
+    // build our application with some routes
+    let app = Router::with_state(app_state.clone())
+        .route("/cosmetics", get(cosmetics::cosmetics))
+        .route("/discord", post(discord::handle_request))
+        .route("/ws", get(ws::ws_handler));
+
+    let admin = if CONFIG.admin_dash {
+        tracing::debug!("admin listening on http://{}", admin_addr);
+        Router::with_state(app_state.clone())
+            .route("/", get(admin::load_admin))
+            .route("/metrics", get(admin::metrics::metrics))
+            .route("/broadcast", post(admin::broadcast::broadcast))
+            .route("/users", get(admin::users::get_users))
+            .route("/users", post(admin::users::add_user))
+            .route("/users", delete(admin::users::remove_user))
+            .route("/cosmetics", get(admin::cosmetics::get_cosmetics))
+            .route("/cosmetics", post(admin::cosmetics::add_cosmetic))
+            .route("/cosmetics", delete(admin::cosmetics::remove_cosmetic))
+            .route("/cosmetics/update", post(admin::cosmetics::force_update))
+    } else {
+        Router::with_state(app_state.clone())
+    };
+
     let (r, r2, _) = join3(
         axum::Server::bind(&addr).serve(app.into_make_service()),
         axum::Server::bind(&admin_addr).serve(admin.into_make_service()),
@@ -152,7 +150,11 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn handle_internal(msg: InternalMessages, state: &Arc<AppState>, tx: &Sender<InternalMessages>) -> Result<()> {
+async fn handle_internal(
+    msg: InternalMessages,
+    state: &Arc<AppState>,
+    tx: &tokio_broadcast::Sender<InternalMessages>,
+) -> Result<()> {
     match msg {
         InternalMessages::RequestUser {
             user_id,

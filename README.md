@@ -89,11 +89,10 @@ cargo run --release
 
 ### POST `/broadcast`
 
-to requires a list of uuids or nothing to send to all users.
+> **info**
+> this is a dashboard endpoint
 
-```
-authorization: $BROADCAST_SECRET
-```
+`to` requires a list of uuids or nothing to send to all users.
 
 ```json
 {
@@ -109,6 +108,9 @@ Ok
 ```
 
 ### GET `/metrics`
+
+> **info**
+> this is a dashboard endpoint
 
 Returns a bunch of prometheus metrics
 

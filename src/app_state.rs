@@ -10,7 +10,6 @@ use crate::{bitflags::CosmeticFlags, messages::InternalMessages};
 
 pub struct AppState {
     pub tx: broadcast::Sender<InternalMessages>,
-    pub broadcast_secret: String,
     pub users: Mutex<HashMap<Uuid, User>>,
     pub cosmetics: Mutex<Vec<Cosmetic>>,
     pub messages_sec: AtomicU16,
