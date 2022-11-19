@@ -19,7 +19,7 @@ use crate::{
     app_state::AppState,
     config::CONFIG,
     messages::{parse_ws_message, to_ws_message, InternalMessages, Messages},
-    utils::{sanitize::sanitize_message, validate_session},
+    utils::{sanitize::sanitize_message, validate_session, Influx},
     Result,
 };
 
@@ -32,7 +32,7 @@ pub async fn ws_handler(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>
 }
 
 async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
-    let _start = Instant::now();
+    let start = Instant::now();
     let (mut sender, mut receiver) = stream.split();
     let mut uuid: Option<Uuid> = None;
     let mut name: Option<String> = None;
@@ -64,6 +64,9 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
         Some(name) => name,
         None => return Ok(()),
     };
+
+    tokio::spawn(Influx::new("connect").label("user_id", &uuid.to_string()).send());
+
     // Subscribe before sending joined message.
     let mut rx = state.tx.subscribe();
 
@@ -294,6 +297,13 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     };
 
     tracing::debug!("{} disconnected from the website", uuid);
+    Influx::new("disconnect")
+        .label("uuid", &uuid.to_string())
+        .value(
+            "duration",
+            &start.duration_since(Instant::now()).as_millis().to_string(),
+        )
+        .await?;
     let mut users = state.users.lock();
     let user = users.get(&uuid);
     let mut user = match user {
@@ -303,5 +313,6 @@ async fn handle_socket(stream: WebSocket, state: Arc<AppState>) -> Result<()> {
     user.connected = false;
     users.insert(uuid, user);
     tracing::info!("TOTAL: {}", users.iter().filter(|(_, u)| u.connected).count());
+
     Ok(())
 }

@@ -3,6 +3,7 @@
 use std::{
     env,
     sync::{atomic::AtomicU16, Arc},
+    time::Duration,
 };
 
 use axum::{
@@ -13,19 +14,22 @@ use futures_util::future::join3;
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 use serenity::builder::CreateMessage;
-use tokio::sync::broadcast as tokio_broadcast;
+use tokio::{
+    sync::broadcast::{self as tokio_broadcast, Sender},
+    time::sleep,
+};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     api::*,
     app_state::AppState,
-    commands::REST,
+    commands::{register, REST},
     config::CONFIG,
     error::Result,
     messages::InternalMessages,
     utils::{
         retrieve_cosmetics::{retrieve_cosmetics, CosmeticFile},
-        set_ctrlc, uuid_to_username,
+        set_ctrlc, uuid_to_username, Influx,
     },
 };
 
@@ -47,15 +51,26 @@ async fn main() -> Result<()> {
     if env::var("WRITE_SOURCES").is_ok() {
         source::write_sources();
     }
-    /* Initlized the CONFIG */
+
+    // Load config
     Lazy::force(&CONFIG);
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG").unwrap_or_else(|_| "dws=debug,tower_http=debug".into()),
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
-    // register().await?;
+
+    // registers the commands
+    tokio::spawn(async {
+        // Register the commands after 60 seconds so to not spam the api when developing
+        sleep(Duration::from_secs(60)).await;
+        if let Err(e) = register().await {
+            tracing::error!("Error registering commands: {:?}", e);
+        }
+    });
+
     let (tx, mut rx) = tokio_broadcast::channel::<InternalMessages>(100);
 
     let cosmetics = retrieve_cosmetics().await;
@@ -71,6 +86,8 @@ async fn main() -> Result<()> {
     set_ctrlc(app_state.clone())?;
 
     let app_state_clone = app_state.clone();
+
+    // saves the cosmetics every 5 minutes
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(300));
 
@@ -94,8 +111,7 @@ async fn main() -> Result<()> {
         .route("/cosmetics", get(cosmetics::cosmetics))
         .route("/cosmetics", post(cosmetics::force_update))
         .route("/discord", post(discord::handle_request))
-        .route("/ws", get(ws::ws_handler))
-        .route("/admin", get(admin::load_admin));
+        .route("/ws", get(ws::ws_handler));
 
     let admin = if CONFIG.admin_dash {
         Router::with_state(app_state.clone())
@@ -110,12 +126,13 @@ async fn main() -> Result<()> {
         Router::with_state(app_state.clone())
     };
 
-    let addr = format!("{host}:{port}", host = CONFIG.host, port = CONFIG.port)
-        .parse()
-        .unwrap();
-    let admin_addr = format!("{host}:{port}", host = CONFIG.host, port = CONFIG.port + 1)
-        .parse()
-        .unwrap();
+    let addr = format!("{host}:{port}", host = CONFIG.host, port = CONFIG.port).parse()?;
+    let admin_addr = format!(
+        "{host}:{port}",
+        host = CONFIG.host,
+        port = CONFIG.admin_port.unwrap_or(CONFIG.port + 1)
+    )
+    .parse()?;
     tracing::debug!("listening on http://{}", addr);
     tracing::debug!("admin listening on http://{}", admin_addr);
     let (r, r2, _) = join3(
@@ -123,66 +140,8 @@ async fn main() -> Result<()> {
         axum::Server::bind(&admin_addr).serve(admin.into_make_service()),
         async {
             while let Ok(msg) = rx.recv().await {
-                match msg {
-                    InternalMessages::RequestUser {
-                        user_id,
-                        requester_id,
-                        nonce,
-                    } => {
-                        let is_online = app_state
-                            .users
-                            .lock()
-                            .get(&user_id)
-                            .map(|x| x.connected)
-                            .unwrap_or_default();
-
-                        let msg = InternalMessages::UserRequestResponse {
-                            is_online,
-                            requester_id,
-                            user_id,
-                            nonce,
-                        };
-                        let _ = tx.send(msg);
-                    }
-                    InternalMessages::IrcCreate {
-                        message,
-                        sender,
-                        date: _,
-                    } => match CONFIG.discord_irc_channel {
-                        Some(channel) => {
-                            let username = if let Ok(r) = uuid_to_username(sender).await {
-                                r.name
-                            } else {
-                                continue;
-                            };
-                            channel
-                                .send_message(&*REST, CreateMessage::new().content(format!("{username}: {}", message)))
-                                .await
-                                .unwrap();
-                        }
-                        None => {}
-                    },
-                    InternalMessages::RequestUsersBulk {
-                        user_ids,
-                        requester_id,
-                        nonce,
-                    } => {
-                        let users = app_state.users.lock();
-                        let list = user_ids
-                            .into_iter()
-                            .map(|user_id| {
-                                let is_online = users.get(&user_id).map(|x| x.connected).unwrap_or_default();
-                                (user_id, is_online)
-                            })
-                            .collect();
-                        let msg = InternalMessages::UserRequestBulkResponse {
-                            users: list,
-                            requester_id,
-                            nonce,
-                        };
-                        let _ = tx.send(msg);
-                    }
-                    _ => {}
+                if let Err(e) = handle_internal(msg, &app_state, &tx).await {
+                    tracing::error!("Error handling internal message: {:?}", e);
                 }
             }
         },
@@ -190,5 +149,81 @@ async fn main() -> Result<()> {
     .await;
     r?;
     r2?;
+    Ok(())
+}
+
+async fn handle_internal(msg: InternalMessages, state: &Arc<AppState>, tx: &Sender<InternalMessages>) -> Result<()> {
+    match msg {
+        InternalMessages::RequestUser {
+            user_id,
+            requester_id,
+            nonce,
+        } => {
+            tokio::spawn(
+                Influx::new("request_online")
+                    .label("uuid", &requester_id.to_string())
+                    .value("user", &user_id.to_string())
+                    .send(),
+            );
+            let is_online = state
+                .users
+                .lock()
+                .get(&user_id)
+                .map(|x| x.connected)
+                .unwrap_or_default();
+
+            let msg = InternalMessages::UserRequestResponse {
+                is_online,
+                requester_id,
+                user_id,
+                nonce,
+            };
+            let _ = tx.send(msg);
+        }
+        InternalMessages::IrcCreate {
+            message,
+            sender,
+            date: _,
+        } => match CONFIG.discord_irc_channel {
+            Some(channel) => {
+                let data = uuid_to_username(sender).await?;
+                channel
+                    .send_message(
+                        &*REST,
+                        CreateMessage::new().content(format!("{}: {}", data.name, message,)),
+                    )
+                    .await
+                    .unwrap();
+                Influx::new("irc_message").label("uuid", &sender.to_string()).await?;
+            }
+            None => {}
+        },
+        InternalMessages::RequestUsersBulk {
+            user_ids,
+            requester_id,
+            nonce,
+        } => {
+            tokio::spawn(
+                Influx::new("bulk_request_online")
+                    .label("uuid", &requester_id.to_string())
+                    .send(),
+            );
+            let users = state.users.lock();
+            let list = user_ids
+                .into_iter()
+                .map(|user_id| {
+                    let is_online = users.get(&user_id).map(|x| x.connected).unwrap_or_default();
+                    (user_id, is_online)
+                })
+                .collect();
+            let msg = InternalMessages::UserRequestBulkResponse {
+                users: list,
+                requester_id,
+                nonce,
+            };
+            let _ = tx.send(msg);
+        }
+        _ => {}
+    };
     Ok(())
 }

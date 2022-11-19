@@ -43,6 +43,12 @@ pub struct Cli {
     /// Discord linked role
     #[arg(env, long, value_parser  = parse_role_id)]
     pub discord_linked_role: Option<RoleId>,
+    /// The port to use for the admin dashboard
+    #[arg(env, long)]
+    pub admin_port: Option<u16>,
+    /// Influx DB line protocol URL
+    #[arg(env, long)]
+    pub influx_url: Option<String>,
 }
 
 fn parse_app_id(src: &str) -> Result<ApplicationId, ParseIntError> {
