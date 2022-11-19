@@ -49,7 +49,11 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                             }
                             tr{background-color: #111111;}
                             tr:nth-child(even){background-color: #262626}
-
+                            #admin {
+                                margin: 0 auto;
+                                width: 100%;
+                                max-width: 100rem;
+                            }
                         "#
                     ]
                 }
@@ -57,6 +61,7 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
 
             }
         body {
+            id: "admin",
             div {
                 h1 { "Admin" }
                 h2 { "Users" }
@@ -68,19 +73,25 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                         th { "Connected" }
                         th { "Discord Id" }
                         th { "Irc Blacklisted" }
+                        th { "Flags" }
                     }
-                    users.iter().map(|(uuid,data)| rsx!{
+                    users.iter().map(|(uuid,data)| {
+                        let prefix = serde_json::to_string(&data.enabled_prefix).unwrap();
+                        let linked_discord = serde_json::to_string(&data.linked_discord).unwrap();
+                        let flags = serde_json::to_string(&data.flags).unwrap();
+                        rsx!{
                         tr {
                             td {
                                 button { class: "delete", value: "{uuid}", "X" }
                             }
                             td { pre { "{uuid}" } }
-                            td { pre { "{data.enabled_prefix:?}" } }
+                            td { pre { a { href: "#cos-{prefix}", "{prefix}" } } }
                             td { pre { "{data.connected}" } }
-                            td { pre { "{data.linked_discord:?}" } }
+                            td { pre { "{linked_discord}" } }
                             td { pre { "{data.irc_blacklisted}" } }
+                            td { pre { "{flags}" } }
                         }
-                    })
+                    }})
                     form {
                         id: "add-user",
                         input {
@@ -159,6 +170,7 @@ pub async fn load_admin(State(state): State<Arc<AppState>>) -> Html<String> {
                     }
                     cosmetics.iter().map(|cosmetic| rsx!{
                         tr {
+                            id: "cos-{cosmetic.id}",
                             td {
                                 button { class: "cdelete", value: "{cosmetic.id}", "X" }
                             }
