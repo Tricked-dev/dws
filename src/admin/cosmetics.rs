@@ -24,6 +24,11 @@ pub struct DeleteCosmetic {
     pub id: u8,
 }
 
+pub async fn get_cosmetics<'a>(State(state): State<Arc<AppState>>) -> Json<Vec<Cosmetic>> {
+    let cosmetics = state.cosmetics.lock();
+    Json(cosmetics.clone())
+}
+
 pub async fn add_cosmetic(State(state): State<Arc<AppState>>, Json(data): Json<AddCosmetic>) -> &'static str {
     let mut cosmetics = state.cosmetics.lock();
     cosmetics.push(Cosmetic {

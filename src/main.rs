@@ -100,8 +100,10 @@ async fn main() -> Result<()> {
     let admin = if CONFIG.admin_dash {
         Router::with_state(app_state.clone())
             .route("/", get(admin::load_admin))
+            .route("/users", get(admin::users::get_users))
             .route("/users", post(admin::users::add_user))
             .route("/users", delete(admin::users::remove_user))
+            .route("/cosmetics", get(admin::cosmetics::get_cosmetics))
             .route("/cosmetics", post(admin::cosmetics::add_cosmetic))
             .route("/cosmetics", delete(admin::cosmetics::remove_cosmetic))
     } else {

@@ -8,8 +8,10 @@ The first fully opensource Skyblock mod backend lol.
   - [GET `/cosmetics`](#get-cosmetics)
   - [POST `/broadcast`](#post-broadcast)
   - [GET `/metrics`](#get-metrics)
+  - [GET `/users`](#get-users)
   - [DELETE `/users?uuid=$uuid`](#delete-usersuuiduuid)
   - [POST `/users`](#post-users)
+  - [GET `/cosmetics`](#get-cosmetics-1)
   - [DELETE `/cosmetics?id=$id`](#delete-cosmeticsidid)
   - [POST `/cosmetics`](#post-cosmetics)
 - [Websockets](#websockets)
@@ -110,6 +112,13 @@ Ok
 
 Returns a bunch of prometheus metrics
 
+### GET `/users`
+
+> **info**
+> this is a dashboard endpoint
+
+Returns the list of connected and saved user
+
 ### DELETE `/users?uuid=$uuid`
 
 > **info**
@@ -123,6 +132,13 @@ Deletes a user from the database
 > this is a dashboard endpoint
 
 Create & Edit a user, payload: <https://github.com/dg-continuum/dws/blob/master/src/admin/users.rs#L13-L20>
+
+### GET `/cosmetics`
+
+> **info**
+> this is a dashboard endpoint
+
+Returns the list of cosmetics
 
 ### DELETE `/cosmetics?id=$id`
 

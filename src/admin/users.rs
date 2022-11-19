@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use axum::extract::{Json, Query, State};
 use serde::Deserialize;
@@ -22,6 +22,11 @@ pub struct AddUser {
 #[derive(Deserialize)]
 pub struct DeleteUser {
     pub uuid: Uuid,
+}
+
+pub async fn get_users<'a>(State(state): State<Arc<AppState>>) -> Json<HashMap<Uuid, User>> {
+    let users = state.users.lock();
+    Json(users.clone())
 }
 
 pub async fn add_user(State(state): State<Arc<AppState>>, Json(data): Json<AddUser>) -> &'static str {
