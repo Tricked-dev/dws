@@ -148,6 +148,10 @@ pub async fn load_admin(State(state): State<Arc<AppState>>, Query(query): Query<
                 }
                 }
             }
+            div {
+                h2 { "Broadcast" }
+                {broadcast_field()}
+            }
             script {
                     defer: "true",
                     r#type: "module",
@@ -270,12 +274,59 @@ fn paginate_buttons<'a, 'b>(page: usize, limit: usize, count: usize) -> LazyNode
             )}
     })
 }
+
+fn broadcast_field<'a, 'b>() -> LazyNodes<'a, 'b> {
+    rsx!(
+        form {
+            id: "broadcast",
+
+            div {
+              textarea {
+                  name: "message",
+                  placeholder: "message",
+                  required: "true"
+              }
+            }
+            button {
+                r#type: "submit",
+                "Broadcast"
+            }
+        }
+        script {
+            defer: "true",
+            r#type: "module",
+            vec![r##"
+            let form = document.getElementById("broadcast");
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const data = Object.fromEntries([...new FormData(form).entries()].filter((x) => x[1] != ""));
+                data["to"] = []; 
+                console.log(data);
+                let res = await fetch("/broadcast", {
+                    method: "POST",
+                    body: JSON.stringify(data),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+                if (res.status == 200) {
+                    alert("Broadcast sent");
+                } else {
+                    alert(`Error sending broadcast: ${await res.text()}`);
+                }
+            });
+            "##]
+        }
+    )
+}
+
 fn users_table<'a, 'b>(users: Vec<&'b (&Uuid, &User)>) -> LazyNodes<'a, 'b> {
     rsx!(
         table {
             tr {
                 th { "" }
-                th { "Username" }
+                th { "Uuid" }
                 th { "Cosmetic" }
                 th { "Connected" }
                 th { "Discord Id" }
