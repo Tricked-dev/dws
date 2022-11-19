@@ -6,6 +6,7 @@ use axum::{
     response::IntoResponse,
     TypedHeader,
 };
+use reqwest::header::CACHE_CONTROL;
 use serde_json::json;
 use uuid::Uuid;
 
@@ -25,10 +26,14 @@ pub async fn cosmetics(State(state): State<Arc<AppState>>) -> impl IntoResponse 
         })
         .collect::<HashMap<&Uuid, &u8>>();
 
-    Json(json!({
+    let mut res = Json(json!({
         "cosmetics": state.cosmetics,
         "users": users_cosmetic_map
     }))
+    .into_response();
+    res.headers_mut()
+        .insert(CACHE_CONTROL, "max-age=120, s-maxage=120".try_into().unwrap());
+    res
 }
 
 pub async fn force_update(
