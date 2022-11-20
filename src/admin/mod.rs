@@ -80,6 +80,9 @@ pub async fn load_admin(State(state): State<Arc<AppState>>, Query(query): Query<
                         href: "javascript:download('/users', 'users.json')",
                         "Download"
                 }
+                div {
+                    {uuid_to_username()}
+                }
                 }
                 div {
                 h2 { "Cosmetics" }
@@ -152,95 +155,14 @@ pub async fn load_admin(State(state): State<Arc<AppState>>, Query(query): Query<
                 h2 { "Broadcast" }
                 {broadcast_field()}
             }
-            script {
-                    defer: "true",
-                    r#type: "module",
-                   vec![ r##"
-window.download = function (url, name) {
-    var anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.target = '_blank';
-    anchor.download = name;
-    anchor.click();
-}
-const form = document.getElementById("add-user");
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  const data = JSON.stringify(
-    Object.fromEntries(
-      [...new FormData(form).entries()].filter((x) => x[1] != "")
-    )
-  );
-  let res = await fetch("/users", {
-    method: "POST",
-    body: data,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if (res.status == 200) {
-    alert("User added");
-    window.location.reload();
-  } else {
-    alert(`Error adding user: ${await res.text()}`);
-  }
-});
-const elements = document.getElementsByClassName("delete");
-for (let i = 0; i < elements.length; i++) {
-  elements[i].addEventListener("click", async (e) => {
-    let res = await fetch(`/users?uuid=${e.target.value}`, {
-      method: "DELETE",
-    });
-    if (res.status == 200) {
-      alert("User deleted");
-      window.location.reload();
-    } else {
-      alert(`Error deleting user: ${await res.text()}`);
-    }
-  });
-}
-const cform = document.getElementById("add-cosmetic");
-cform.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  const d = Object.fromEntries(
-    [...new FormData(cform).entries()].filter((x) => x[1] != "")
-  );
-  d.id = parseInt(d.id);
-  d.required_flags = parseInt(d.required_flags);
-  d.type = parseInt(d.type);
-  const data = JSON.stringify(d);
-  let res = await fetch("/cosmetics", {
-    method: "POST",
-    body: data,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if (res.status == 200) {
-    alert("Cosmetic added");
-    window.location.reload();
-  } else {
-    alert(`Error adding cosmetic: ${await res.text()}`);
-  }
-});
 
-const celements = document.getElementsByClassName("cdelete");
-for (let i = 0; i < celements.length; i++) {
-  celements[i].addEventListener("click", async (e) => {
-    let res = await fetch(`/cosmetics?id=${e.target.value}`, {
-      method: "DELETE",
-    });
-    if (res.status == 200) {
-      alert("Cosmetic deleted");
-      window.location.reload();
-    } else {
-      alert(`Error deleting cosmetic: ${await res.text()}`);
-    }
-  });
-}"##]
-                }
+
+            script {
+                r#type: "module",
+                vec![
+                    include_str!("./code.js")
+                ]
+            }
           }
     }))
 }
@@ -292,32 +214,7 @@ fn broadcast_field<'a, 'b>() -> LazyNodes<'a, 'b> {
                 "Broadcast"
             }
         }
-        script {
-            defer: "true",
-            r#type: "module",
-            vec![r##"
-            let form = document.getElementById("broadcast");
-            form.addEventListener("submit", async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const data = Object.fromEntries([...new FormData(form).entries()].filter((x) => x[1] != ""));
-                data["to"] = []; 
-                console.log(data);
-                let res = await fetch("/broadcast", {
-                    method: "POST",
-                    body: JSON.stringify(data),
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                });
-                if (res.status == 200) {
-                    alert("Broadcast sent");
-                } else {
-                    alert(`Error sending broadcast: ${await res.text()}`);
-                }
-            });
-            "##]
-        }
+
     )
 }
 
@@ -383,6 +280,7 @@ fn meta<'a, 'b>(users: usize, cosmetics: usize) -> LazyNodes<'a, 'b> {
                 r#"
                 :root {
                     color-scheme: dark;
+                    --font-mono: Ubuntu Mono, Fira Code, Roboto Mono, Sans Mono, monospace;
                 }
                 th:not(:first-child) {
                     min-width: 100px;
@@ -398,10 +296,39 @@ fn meta<'a, 'b>(users: usize, cosmetics: usize) -> LazyNodes<'a, 'b> {
                     font-family: Roboto, Sans, Arial;
                 }
                 pre {
-                    font-family: Ubuntu Mono, Fira Code, Roboto Mono, Sans Mono, monospace;
+                    font-family: var(--font-mono);
+                }
+                #uuids {
+                    width: 36em;
+                    font-family: var(--font-mono);
                 }
                 "#
                 ]
           }
+    )
+}
+fn uuid_to_username<'a, 'b>() -> LazyNodes<'a, 'b> {
+    rsx!(
+            h2 { "Uuid to username" }
+            form {
+                id: "uuids_to_username",
+                textarea {
+                    name: "uuids",
+                    id: "uuids",
+                    placeholder: "uuids split by new lines",
+                    required: "true",
+                }
+                textarea {
+                    name: "usernames",
+                    id: "usernames",
+                    placeholder: "Usernames will come here when converted",
+                    readonly: "true",
+                }
+                button {
+                    r#type: "submit",
+                    "Convert"
+                }
+            }
+
     )
 }

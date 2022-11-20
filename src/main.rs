@@ -129,6 +129,7 @@ async fn main() -> Result<()> {
             .route("/cosmetics", post(admin::cosmetics::add_cosmetic))
             .route("/cosmetics", delete(admin::cosmetics::remove_cosmetic))
             .route("/cosmetics/update", post(admin::cosmetics::force_update))
+            .route("/uuids_to_usernames", post(admin::users::uuids_to_usernames))
     } else {
         Router::with_state(app_state.clone())
     };

@@ -1,6 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use axum::extract::{Json, Query, State};
+use futures_util::{stream::FuturesUnordered, StreamExt};
 use serde::Deserialize;
 use serenity::model::prelude::UserId;
 use uuid::Uuid;
@@ -8,6 +9,8 @@ use uuid::Uuid;
 use crate::{
     app_state::{AppState, User},
     bitflags::CosmeticFlags,
+    error::Result,
+    utils::{uuid_to_username, UuidAndUsername},
 };
 
 #[derive(Deserialize)]
@@ -24,7 +27,22 @@ pub struct DeleteUser {
     pub uuid: Uuid,
 }
 
-pub async fn get_users<'a>(State(state): State<Arc<AppState>>) -> Json<HashMap<Uuid, User>> {
+pub async fn uuids_to_usernames(Json(uuids): Json<Vec<Uuid>>) -> Json<Vec<UuidAndUsername>> {
+    let results = FuturesUnordered::new();
+    for uuid in uuids {
+        results.push(uuid_to_username(uuid));
+    }
+    Json(
+        results
+            .collect::<Vec<Result<UuidAndUsername>>>()
+            .await
+            .into_iter()
+            .filter_map(Result::ok)
+            .collect(),
+    )
+}
+
+pub async fn get_users(State(state): State<Arc<AppState>>) -> Json<HashMap<Uuid, User>> {
     let users = state.users.lock();
     Json(users.clone())
 }
